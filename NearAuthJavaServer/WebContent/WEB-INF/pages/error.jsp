@@ -1,0 +1,21 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="/WEB-INF/tld/spring.tld"  %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <%@ include file="header.jsp" %>    
+</head>
+<body>
+    <div id="banner"></div>
+    <div id="signinBody">
+        <div id="centerPanelCo">
+            <div id='optoutMsg' class='redMessage'>${ errorMessage }</div>
+            <img id="licenseLogo" src="/imgFiles/b2f72.png" alt="NearAuth.ai logo">
+        </div>
+    </div>
+    <%@ include file="companyFooter.jsp" %>
+</body>
+</html>

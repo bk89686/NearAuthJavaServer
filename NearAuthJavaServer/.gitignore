@@ -1,0 +1,4 @@
+/target/
+/WebContent/resources/properties/b2fDbSettings.prop
+/src/main/resources/application.properties
+/src/main/resources/app/properties/

@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.blue2factor.android",
+      "sha256_cert_fingerprints": [
+        "FF:33:C0:7E:75:04:B1:88:0C:08:32:0E:0B:52:6B:36:6C:36:A4:B5:1C:EB:E3:EA:12:FA:9E:6C:ED:6C:AD:FE"
+      ]
+    }
+  }
+]

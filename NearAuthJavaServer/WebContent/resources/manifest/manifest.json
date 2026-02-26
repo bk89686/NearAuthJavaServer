@@ -1,0 +1,20 @@
+{
+  "short_name": "B2F",
+  "name": "NearAuth.ai",
+  "icons": [
+    {
+      "src": "/imgFiles/ic_launcher_144.png",
+      "type": "image/png",
+      "sizes": "144x144"
+    },
+    {
+      "src": "/imgFiles/b2f512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#3F51B5",
+  "display": "fullscreen",
+  "theme_color": "#3F51B5"
+}

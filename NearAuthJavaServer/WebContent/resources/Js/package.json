@@ -1,0 +1,20 @@
+{
+  "name": "js",
+  "version": "1.0.0",
+  "description": "NearAuth.ai",
+  "main": "b2F_2Fa_r.1.0.0.199.js",
+  "scripts": {
+    "build": "browserify b2F_2Fa_r.1.0.0.199.js -o b2F_2Fa_r.1.0.0.211_browserify.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "browserify": "^16.5.1",
+    "localforage": "^1.7.3"
+  },
+  "dependencies": {
+    "base64url": "^3.0.1",
+    "idb": "^5.0.2",
+    "indexeddb": "0.0.0"
+  }
+}

@@ -1,0 +1,50 @@
+<md:EntityDescriptor entityID="https://secure.blue2factor.com/SAML2/SSO/Redirect" 
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+    validUntil="2020-02-23T19:47:24Z"
+    cacheDuration="PT1582919244S"
+    entityID="65620B50-A989-4CB0-B8A7-FABC5A5DBD68">
+    <ds:Signature></ds:Signature>
+    <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <md:KeyDescriptor use="signing">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>MIIFezCCBSGgAwIBAgIJAL+57qqBMxiBMAsGCWCGSAFlAwQDAjCBoTELMAkGA1UEBhMCVVMxETAPBgNVBAgMCE5ldyBZb3JrMRMwEQYDVQQHDApCaW5naGFtdG9uMRQwEgYDVQQKDAtCbHVlMkZhY3RvcjERMA8GA1UECwwIU2VjdXJpdHkxHDAaBgNVBAMME3d3dy5ibHVlMmZhY3Rvci5jb20xIzAhBgkqhkiG9w0BCQEWFGhlbHBAYmx1ZTJmYWN0b3IuY29tMB4XDTIwMDIyMTE5NDE0OVoXDTIwMDMyMjE5NDE0OVowgaExCzAJBgNVBAYTAlVTMREwDwYDVQQIDAhOZXcgWW9yazETMBEGA1UEBwwKQmluZ2hhbXRvbjEUMBIGA1UECgwLQmx1ZTJGYWN0b3IxETAPBgNVBAsMCFNlY3VyaXR5MRwwGgYDVQQDDBN3d3cuYmx1ZTJmYWN0b3IuY29tMSMwIQYJKoZIhvcNAQkBFhRoZWxwQGJsdWUyZmFjdG9yLmNvbTCCA0YwggI5BgcqhkjOOAQBMIICLAKCAQEA4Vgr6GU5Qrp3Wn0Cgg07qsJWv08NWkizlq8C8zrpgh+s0XmGpfMENBMG/QJQcFHE9QZWWtPCoT994EscDdZwMh7yKlzk1e/hYhxbj2ZG2ZeWCVDoMQHWm+ijQ6FLtmBOvhd7pX2NMsvnSUXl9We9UI0Y3nTxoixnQ40mLXynj/D4cohxytTT1N6q2+LABh/j5ZeNv0n/TuSQNeyyzJMOgCtj8GfuBIZzC7Hx8Em4VL3hHqjUbYclMsjjjybvEmRzUZ00SNVValVqKcBQ8gGOZwMA3XUla16Gk/USCUOLmSCvWMXXY+IbqWqKG/P/R6Ei6w8eQ3pwCctaGIhW82OFcQIhAKv7rZEEEW3TqAWBS+kfr0/sgqPCmp1iSJbUCVqpsXEpAoIBAG5r6teNHeN9uETPjpA89q07HLjwV0wjcT074/WfMUFP0SwL3MiKc7/PoLRsm26Mbo8zG1nLJfN+puSXuSf0X9vb/q5UR7P7EQw0RTZ5jS7y79s7JOyI8/TLz+m7gTRNjjWOa4nevPXlERTcKM0OcfWqdoYOcWPY5m9ctw9AL9AQJKLfkWdqWWfjCn3O73ilbN2ycLPDxFhAiDnRsD4TeSHj/p6b5v36c+BPPGM6P6w5KTxiXHhRti6UL7+ZUZzHcGDIfSxLNnQ4AW3W6XDff0mAX+LdsxIFnchLrjnOj4VdezHjAaT3XpwHc8YABMdA1krrOsjFajxCvHT76cm+p0MDggEFAAKCAQAp+pPtR/sHlHnWtS1SYKzVGRkiO5y5gZmVhNmw1GYbli6KbM6OK8Z78VKa7PTAZ8ClmDGzGtDY8sKCURNcCqNuMvvaThqHhu0wSQNnyDJwYwH1WFxx2p1tZ63ZkqUnF8EwtC/Ka0oK7bgOVgml0Kvm+NO0l9BpWaWnV2BZdQBI5x+AoByQUf4/EessLZ8MfELTzyAQOB1qffL3k11MfhUcbVUw7rgz2b4iuheIP95fhEynOXBB5WGpZ69tiEWDbLP90DJKtlyjMKnj+s+fmOns8prerqKM0u97B5WcJ1adYgFo+5bSnlngXhs3WTQ311LBfdbcvHU/3VCowAUvMRTLo1AwTjAdBgNVHQ4EFgQUl6ZGrnN2U0TiMoyYZcGYUGEVmrMwHwYDVR0jBBgwFoAUl6ZGrnN2U0TiMoyYZcGYUGEVmrMwDAYDVR0TBAUwAwEB/zALBglghkgBZQMEAwIDRwAwRAIgPLbJxnuISoGPS5ApvCvrY30A9UAsTEntYud1yVjIgAoCIBjOT6C4ffLYDydaupkPxAjd/my75NeYM/LoD4px9tJj</ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:KeyDescriptor use="encryption">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>MIIFezCCBSGgAwIBAgIJAL+57qqBMxiBMAsGCWCGSAFlAwQDAjCBoTELMAkGA1UEBhMCVVMxETAPBgNVBAgMCE5ldyBZb3JrMRMwEQYDVQQHDApCaW5naGFtdG9uMRQwEgYDVQQKDAtCbHVlMkZhY3RvcjERMA8GA1UECwwIU2VjdXJpdHkxHDAaBgNVBAMME3d3dy5ibHVlMmZhY3Rvci5jb20xIzAhBgkqhkiG9w0BCQEWFGhlbHBAYmx1ZTJmYWN0b3IuY29tMB4XDTIwMDIyMTE5NDE0OVoXDTIwMDMyMjE5NDE0OVowgaExCzAJBgNVBAYTAlVTMREwDwYDVQQIDAhOZXcgWW9yazETMBEGA1UEBwwKQmluZ2hhbXRvbjEUMBIGA1UECgwLQmx1ZTJGYWN0b3IxETAPBgNVBAsMCFNlY3VyaXR5MRwwGgYDVQQDDBN3d3cuYmx1ZTJmYWN0b3IuY29tMSMwIQYJKoZIhvcNAQkBFhRoZWxwQGJsdWUyZmFjdG9yLmNvbTCCA0YwggI5BgcqhkjOOAQBMIICLAKCAQEA4Vgr6GU5Qrp3Wn0Cgg07qsJWv08NWkizlq8C8zrpgh+s0XmGpfMENBMG/QJQcFHE9QZWWtPCoT994EscDdZwMh7yKlzk1e/hYhxbj2ZG2ZeWCVDoMQHWm+ijQ6FLtmBOvhd7pX2NMsvnSUXl9We9UI0Y3nTxoixnQ40mLXynj/D4cohxytTT1N6q2+LABh/j5ZeNv0n/TuSQNeyyzJMOgCtj8GfuBIZzC7Hx8Em4VL3hHqjUbYclMsjjjybvEmRzUZ00SNVValVqKcBQ8gGOZwMA3XUla16Gk/USCUOLmSCvWMXXY+IbqWqKG/P/R6Ei6w8eQ3pwCctaGIhW82OFcQIhAKv7rZEEEW3TqAWBS+kfr0/sgqPCmp1iSJbUCVqpsXEpAoIBAG5r6teNHeN9uETPjpA89q07HLjwV0wjcT074/WfMUFP0SwL3MiKc7/PoLRsm26Mbo8zG1nLJfN+puSXuSf0X9vb/q5UR7P7EQw0RTZ5jS7y79s7JOyI8/TLz+m7gTRNjjWOa4nevPXlERTcKM0OcfWqdoYOcWPY5m9ctw9AL9AQJKLfkWdqWWfjCn3O73ilbN2ycLPDxFhAiDnRsD4TeSHj/p6b5v36c+BPPGM6P6w5KTxiXHhRti6UL7+ZUZzHcGDIfSxLNnQ4AW3W6XDff0mAX+LdsxIFnchLrjnOj4VdezHjAaT3XpwHc8YABMdA1krrOsjFajxCvHT76cm+p0MDggEFAAKCAQAp+pPtR/sHlHnWtS1SYKzVGRkiO5y5gZmVhNmw1GYbli6KbM6OK8Z78VKa7PTAZ8ClmDGzGtDY8sKCURNcCqNuMvvaThqHhu0wSQNnyDJwYwH1WFxx2p1tZ63ZkqUnF8EwtC/Ka0oK7bgOVgml0Kvm+NO0l9BpWaWnV2BZdQBI5x+AoByQUf4/EessLZ8MfELTzyAQOB1qffL3k11MfhUcbVUw7rgz2b4iuheIP95fhEynOXBB5WGpZ69tiEWDbLP90DJKtlyjMKnj+s+fmOns8prerqKM0u97B5WcJ1adYgFo+5bSnlngXhs3WTQ311LBfdbcvHU/3VCowAUvMRTLo1AwTjAdBgNVHQ4EFgQUl6ZGrnN2U0TiMoyYZcGYUGEVmrMwHwYDVR0jBBgwFoAUl6ZGrnN2U0TiMoyYZcGYUGEVmrMwDAYDVR0TBAUwAwEB/zALBglghkgBZQMEAwIDRwAwRAIgPLbJxnuISoGPS5ApvCvrY30A9UAsTEntYud1yVjIgAoCIBjOT6C4ffLYDydaupkPxAjd/my75NeYM/LoD4px9tJj</ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:ArtifactResolutionService isDefault="true" index="0"
+            Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
+            Location="https://secure.nearauth.ai/SAML2/ArtifactResolution"/>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
+        <md:SingleSignOnService
+            Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+            Location="https://secure.nearauth.ai/SAML2/SSO/Redirect"/>
+        <md:SingleSignOnService
+            Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+            Location="https://secure.nearauth.ai/SAML2/SSO/POST"/>
+        <md:SingleSignOnService
+            Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact"
+            Location="secure.nearauth.ai/SAML2/Artifact"/>
+        <md:SingleLogoutService 
+            Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" 
+            Location="http://secure.nearauth.ai/SAML2/SSO/Logout"/>
+    </md:IDPSSODescriptor>
+    <md:Organization>
+        <md:OrganizationName xml:lang="en">NearAuth.ai/md:OrganizationName>
+        <md:OrganizationDisplayName xml:lang="en">NearAuth.ai/md:OrganizationDisplayName>
+        <md:OrganizationURL xml:lang="en">https://www.nearauth.ai/</md:OrganizationURL>
+    </md:Organization>
+    <md:ContactPerson contactType="technical">
+        <md:SurName>SAML Support</md:SurName>
+        <md:EmailAddress>mailto:samlSupport@nearauth.ai</md:EmailAddress>
+    </md:ContactPerson>
+</md:EntityDescriptor>
