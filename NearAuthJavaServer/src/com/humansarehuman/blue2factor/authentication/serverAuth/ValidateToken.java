@@ -21,14 +21,16 @@ import com.humansarehuman.blue2factor.constants.Urls;
 import com.humansarehuman.blue2factor.dataAndAccess.CompanyDataAccess;
 import com.humansarehuman.blue2factor.dataAndAccess.DataAccess;
 import com.humansarehuman.blue2factor.dataAndAccess.SamlDataAccess;
+import com.humansarehuman.blue2factor.entities.AccessAllowedWithAccessType;
 import com.humansarehuman.blue2factor.entities.IdentityObjectFromServer;
+import com.humansarehuman.blue2factor.entities.enums.ConnectionType;
 import com.humansarehuman.blue2factor.entities.enums.NonMemberStrategy;
 import com.humansarehuman.blue2factor.entities.enums.TokenDescription;
-import com.humansarehuman.blue2factor.entities.jsonConversion.apiResponse.ApiResponseWithToken;
 import com.humansarehuman.blue2factor.entities.tables.BrowserDbObj;
 import com.humansarehuman.blue2factor.entities.tables.CompanyDbObj;
 import com.humansarehuman.blue2factor.entities.tables.DeviceDbObj;
 import com.humansarehuman.blue2factor.entities.tables.GroupDbObj;
+import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
 import com.humansarehuman.blue2factor.utilities.jwt.JsonWebToken;
 
 /**
@@ -46,10 +48,10 @@ import com.humansarehuman.blue2factor.utilities.jwt.JsonWebToken;
 @RequestMapping(Urls.TOKEN_VALIDATE)
 public class ValidateToken extends B2fApi {
 	@RequestMapping(method = { RequestMethod.GET, RequestMethod.POST }, produces = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ApiResponseWithToken validateTokenGetPost(HttpServletRequest request,
+	public @ResponseBody AccessAllowedWithAccessType validateTokenGetPost(HttpServletRequest request,
 			HttpServletResponse httpResponse, ModelMap model, @PathVariable("apiKey") String apiKey,
 			@RequestHeader(name = "Authorization") String authHeader) {
-		ApiResponseWithToken response;
+		AccessAllowedWithAccessType response;
 		SamlDataAccess dataAccess = new SamlDataAccess();
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);
 		if (company != null) {
@@ -68,16 +70,19 @@ public class ValidateToken extends B2fApi {
 					if (device != null) {
 						response = validateWithSession(b2fAuth, company, device, dataAccess);
 					} else {
-						response = new ApiResponseWithToken(Outcomes.FAILURE, Constants.DEVICE_NOT_FOUND);
+						response = new AccessAllowedWithAccessType(false, ConnectionType.NONE, 
+								DateTimeUtilities.getCurrentTimestamp(), "",  Constants.DEVICE_NOT_FOUND);
 					}
 				} else {
 					dataAccess.addLog("neither token nor session were found", LogConstants.WARNING);
-					response = new ApiResponseWithToken(Outcomes.FAILURE, Constants.NEEDS_SAML_VERIFICATION);
+					response = new AccessAllowedWithAccessType(false, ConnectionType.NONE, 
+							DateTimeUtilities.getCurrentTimestamp(), "",  Constants.NEEDS_SAML_VERIFICATION);
 				}
 			}
 		} else {
 			dataAccess.addLog(Constants.CO_NOT_FOUND, LogConstants.WARNING);
-			response = new ApiResponseWithToken(Outcomes.FAILURE, "bad url");
+			response = new AccessAllowedWithAccessType(false, ConnectionType.NONE, 
+					DateTimeUtilities.getCurrentTimestamp(), "",  "bad url");
 		}
 		return response;
 	}
@@ -94,35 +99,41 @@ public class ValidateToken extends B2fApi {
 		return jwt;
 	}
 
-	private ApiResponseWithToken validateWithSession(String b2fAuth, CompanyDbObj company, DeviceDbObj device,
+	private AccessAllowedWithAccessType validateWithSession(String b2fAuth, CompanyDbObj company, DeviceDbObj device,
 			CompanyDataAccess dataAccess) {
-		int outcome = Outcomes.FAILURE;
 		String reason = "";
 		String token = "";
+		AccessAllowedWithAccessType accessAllowedWithAccessType = new AccessAllowedWithAccessType(false, ConnectionType.NONE,
+				DateTimeUtilities.getCurrentTimestamp());
 		if (device.getSignedIn()) {
 			// if (dataAccess.quickIsAccessAllowed(device) {
-
+			accessAllowedWithAccessType = dataAccess.isAccessAllowedByTokenWithConnectionMethod(device, b2fAuth, TokenDescription.AUTHENTICATION);
 			if (dataAccess.isAccessAllowedByAuthToken(device, b2fAuth)) {
 				BrowserDbObj browser = dataAccess.getBrowserByToken(b2fAuth, TokenDescription.AUTHENTICATION);
 				if (browser != null) {
 					if (!browser.isExpired()) {
 						IdentityObjectFromServer idObj = new IdentityObjectFromServer(browser, false);
-						token = new JsonWebToken().buildJwt(idObj);
-						outcome = Outcomes.SUCCESS;
+						String audience = company.getCompleteCompanyLoginUrl();
+						token = new JsonWebToken().buildJwt(idObj, audience);
+						accessAllowedWithAccessType.setToken(token);
 					} else {
 						dataAccess.expireToken(b2fAuth);
 						reason = Constants.BROWSER_NOT_FOUND;
+						accessAllowedWithAccessType.setReason(reason);
 					}
 				} else {
 					reason = Constants.BROWSER_NOT_FOUND;
+					accessAllowedWithAccessType.setReason(reason);
 				}
 			} else {
 				reason = Constants.SECOND_FACTOR_FAILED;
+				accessAllowedWithAccessType.setReason(reason);
 			}
 		} else {
 			reason = Constants.SIGNED_OUT;
+			accessAllowedWithAccessType.setReason(reason);
 		}
-		return new ApiResponseWithToken(outcome, reason, token);
+		return accessAllowedWithAccessType;
 	}
 
 	public BrowserDbObj getBrowserFromJwt(HttpServletRequest request, HttpServletResponse httpResponse,
@@ -146,10 +157,11 @@ public class ValidateToken extends B2fApi {
 		return browser;
 	}
 
-	private ApiResponseWithToken validateWithJwt(HttpServletRequest request, HttpServletResponse httpResponse,
+	private AccessAllowedWithAccessType validateWithJwt(HttpServletRequest request, HttpServletResponse httpResponse,
 			String authToken, CompanyDbObj company, SamlDataAccess dataAccess) {
 		String jwtToken = null;
-		ApiResponseWithToken apiResponse = new ApiResponseWithToken(Outcomes.FAILURE, "", "");
+		AccessAllowedWithAccessType apiResponse = new AccessAllowedWithAccessType(false, 
+				ConnectionType.NONE, DateTimeUtilities.getCurrentTimestamp(), "", "");
 		try {
 			JsonWebToken jwt = new JsonWebToken();
 			String[] authTokenArr = authToken.split("&");
@@ -164,12 +176,13 @@ public class ValidateToken extends B2fApi {
 						if (device.getSignedIn()) {
 							IdentityObjectFromServer idObj = new IdentityObjectFromServer(browser, false);
 							JsonWebToken jwtBuilder = new JsonWebToken();
-							if (dataAccess.isAccessAllowed(device, "validateWithJwt")) {
+							apiResponse = dataAccess.isAccessAllowedWithConnectionMethod(device, "validateWithJwt", false);
+							if (apiResponse.isAccessAllowed()) {
 								dataAccess.addLog("access was allowed");
 								if (!browser.isExpired()) {
 									dataAccess.addLog("browser was not expired", LogConstants.TRACE);
-									apiResponse.setToken(jwtBuilder.buildJwtForServer(idObj));
-									apiResponse.setOutcome(Outcomes.SUCCESS);
+									String audience = company.getCompleteCompanyLoginUrl();
+									apiResponse.setToken(jwtBuilder.buildJwtForServer(idObj, audience));
 								} else {
 									dataAccess.addLog("browser expired", LogConstants.WARNING);
 									dataAccess.expireAllJwtsForToken(jwtToken);
@@ -205,7 +218,7 @@ public class ValidateToken extends B2fApi {
 		return apiResponse;
 	}
 
-	private ApiResponseWithToken handleNonMembers(IdentityObjectFromServer idObj, SamlDataAccess dataAccess) {
+	private AccessAllowedWithAccessType handleNonMembers(IdentityObjectFromServer idObj, SamlDataAccess dataAccess) {
 		boolean nonMemberAccepted = false;
 		String token = "";
 		String reason = "";
@@ -239,13 +252,21 @@ public class ValidateToken extends B2fApi {
 		JsonWebToken jwtBuilder = new JsonWebToken();
 		if (nonMemberAccepted) {
 			dataAccess.addLog("non member Accepted");
-			token = jwtBuilder.buildJwtForServer(idObj);
+			token = jwtBuilder.buildJwtForServer(idObj, idObj.getCompany().getCompanyCompletionUrl());
 			outcome = Outcomes.SUCCESS;
 		} else {
-			token = jwtBuilder.buildExpiredJwt(idObj);
+			token = jwtBuilder.buildExpiredJwt(idObj, idObj.getCompany().getCompanyCompletionUrl());
 			dataAccess.addLog("factor2 failed");
 			reason = Constants.SECOND_FACTOR_FAILED;
 		}
-		return new ApiResponseWithToken(outcome, reason, token);
+		AccessAllowedWithAccessType accessAllowedWithAccessType;
+		if (outcome == Outcomes.SUCCESS) {
+			accessAllowedWithAccessType = new AccessAllowedWithAccessType(true, 
+					ConnectionType.NONMEMBER_ACCESS, DateTimeUtilities.getCurrentTimestamp(), token, reason);
+		} else {
+			accessAllowedWithAccessType = new AccessAllowedWithAccessType(false, 
+					ConnectionType.NONE, DateTimeUtilities.getCurrentTimestamp(), token, reason);
+		}
+		return accessAllowedWithAccessType;
 	}
 }

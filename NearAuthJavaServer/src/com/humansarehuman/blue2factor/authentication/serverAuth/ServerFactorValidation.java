@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.humansarehuman.blue2factor.authentication.api.B2fApi;
 import com.humansarehuman.blue2factor.constants.Constants;
+import com.humansarehuman.blue2factor.constants.LogConstants;
 import com.humansarehuman.blue2factor.constants.Outcomes;
 import com.humansarehuman.blue2factor.constants.Urls;
 import com.humansarehuman.blue2factor.dataAndAccess.CompanyDataAccess;
@@ -71,6 +72,7 @@ public class ServerFactorValidation extends B2fApi {
 	public @ResponseBody ApiResponseWithToken serverFactorValidationPostJson(@RequestBody ApiRequestWithJsonKey apiReq,
 			HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) throws IOException {
 		DataAccess dataAccess = new DataAccess();
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		dataAccess.addLog("ServerFactorValidation", "entry");
 		IdentityObjectFromServer idObj = setIdentityObject(apiReq);
 		String browserSession = apiReq.getBrowserSession();
@@ -80,17 +82,17 @@ public class ServerFactorValidation extends B2fApi {
 		RsaOaepJsonWebPrivateKey jwpk = apiReq.getJwpk();
 
 		String cmd = apiReq.getCmd();
-		dataAccess.addLog("reqUrl: " + reqUrl + "; origin: " + origin);
-		dataAccess.addLog("cmd: " + cmd);
-		dataAccess.addLog("session: " + browserSession);
+		dataAccess.addLog("reqUrl: " + reqUrl + "; origin: " + origin, logLevel);
+		dataAccess.addLog("cmd: " + cmd, logLevel);
+		dataAccess.addLog("session: " + browserSession, logLevel);
 
 		GeneralUtilities util = new GeneralUtilities();
 		ApiResponseWithToken response = handleValidationRequest(idObj, browserSession, cmd, jwk, jwpk,
 				GeneralUtilities.getUrlHost(reqUrl));
 		if (response != null) {
-			dataAccess.addLog("outcome: " + response.getOutcome() + ", reason: " + response.getReason());
+			dataAccess.addLog("outcome: " + response.getOutcome() + ", reason: " + response.getReason(), logLevel);
 		} else {
-			dataAccess.addLog("response was null");
+			dataAccess.addLog("response was null", LogConstants.WARNING);
 		}
 		httpResponse = util.setResponseHeader(httpResponse, reqUrl);
 		return response;

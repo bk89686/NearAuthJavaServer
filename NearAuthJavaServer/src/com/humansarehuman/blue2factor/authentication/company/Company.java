@@ -14,11 +14,11 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.shibboleth.shared.xml.impl.BasicParserPool;
 
 import org.apache.http.util.TextUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Unmarshaller;
 import org.opensaml.core.xml.io.UnmarshallerFactory;
@@ -70,8 +70,9 @@ import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
 import com.humansarehuman.blue2factor.utilities.Encryption;
 import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 import com.humansarehuman.blue2factor.utilities.JsonUtilities;
+import com.humansarehuman.blue2factor.utilities.saml.Saml;
 
-import net.shibboleth.utilities.java.support.xml.BasicParserPool;
+//import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 
 @Controller
 @RequestMapping(value = { "", "/", Urls.COMPANY })
@@ -121,7 +122,7 @@ public class Company extends BaseController {
 	@SuppressWarnings("ucd")
 	public String companyPageProcessPost(HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model)
 			throws IOException {
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		AdminSignin adminSignin = checkPermission(request, httpResponse);
 		String nextPage;
 		CompanyResponseHelper companyResponseHelper = null;
@@ -854,7 +855,7 @@ public class Company extends BaseController {
 			Element samlElem = doc.getDocumentElement();
 			String node = samlElem.getNodeName();
 			dataAccess.addLog("samlElem: " + node);
-			InitializationService.initialize();
+			Saml.initializeSaml();
 			UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 			if (unmarshallerFactory == null) {
 				dataAccess.addLog("unmarshallerFactory is null");
@@ -895,7 +896,7 @@ public class Company extends BaseController {
 			Element samlElem = doc.getDocumentElement();
 			String node = samlElem.getNodeName();
 			dataAccess.addLog("samlElem: " + node);
-			InitializationService.initialize();
+			Saml.initializeSaml();
 			UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 			if (unmarshallerFactory == null) {
 				dataAccess.addLog("unmarshallerFactory is null");

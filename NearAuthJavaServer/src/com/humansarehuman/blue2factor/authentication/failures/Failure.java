@@ -151,8 +151,8 @@ public class Failure extends B2fApi {
 
 	protected UrlAndModel returnToSenderViaForm(String submitUrl, ModelMap model, IdentityObjectFromServer idObj,
 			CompanyDataAccess dataAccess) {
-		dataAccess.addLog("submitUrl: " + submitUrl);
-		String jwt = new JsonWebToken().buildJwt(idObj);
+		String audience = idObj.getCompany().getCompleteCompanyLoginUrl();
+		String jwt = new JsonWebToken().buildJwt(idObj, audience);
 		model.addAttribute("submitUrl", submitUrl);
 		model.addAttribute("jwt", jwt);
 		boolean central = idObj.getDevice().isCentral();
@@ -163,71 +163,12 @@ public class Failure extends B2fApi {
 		return new UrlAndModel("resetJwt", model);
 	}
 
-//	protected UrlAndModel returnToSenderViaForm(String submitUrl, ModelMap model, IdentityObjectFromServer idObj,
-//			DeviceConnectionDbObj connection, String authToken, CompanyDataAccess dataAccess) {
-//		dataAccess.addLog("submitUrl: " + submitUrl);
-//		String jwt = new JsonWebToken().buildJwt(idObj);
-//		model.addAttribute("submitUrl", submitUrl);
-//		model.addAttribute("jwt", jwt);
-//		boolean central = idObj.getDevice().isCentral();
-//		model.addAttribute("central", central);
-//		if (isFirstFailureWithoutBle(idObj.getDevice(), connection, authToken, dataAccess)) {
-//			UrlAndModel urlAndModel = this.reSetup(model, idObj, dataAccess);
-//			model = urlAndModel.getModelMap();
-//		} else {
-//			KeyType keyType = KeyType.B2F_SERVER_PRIVATE_KEY_FOR_BROWSER;
-//			if (idObj.getBrowser() != null) {
-//				KeyDbObj key = dataAccess.getKeyByTypeAndBrowserAndNotOurUrl(keyType, idObj.getBrowser());
-//				if (key == null) {
-//					// they never finished setting up
-//					dataAccess.addLog("completing setup");
-//					UrlAndModel urlAndModel = this.reSetup(model, idObj, dataAccess);
-//					model = urlAndModel.getModelMap();
-//				}
-//			}
-//		}
-//		dataAccess.addLog("sending to resetJwt to forward to " + submitUrl);
-//		return new UrlAndModel("resetJwt", model);
-//	}
-
-//	private boolean isFirstFailureWithoutBle(DeviceDbObj device, DeviceConnectionDbObj connection, String authToken,
-//			CompanyDataAccess dataAccess) {
-//		boolean firstWithoutBle = false;
-//		BrowserDbObj browser = dataAccess.getBrowserByToken(authToken, TokenDescription.AUTHENTICATION);
-//		if (!browser.getHasFailed()) {
-//			if (device.getHasBle()) {
-//				DeviceDbObj otherDevice = dataAccess.getOtherDeviceInConnection(device, connection);
-//				if (!otherDevice.getHasBle()) {
-//					firstWithoutBle = true;
-//				}
-//			} else {
-//				firstWithoutBle = true;
-//			}
-//			browser.setHasFailed(true);
-//			dataAccess.updateBrowser(browser);
-//		}
-//		dataAccess.addLog("firstWithoutBle: " + firstWithoutBle);
-//		return firstWithoutBle;
-//	}
-
-//	protected String reSignin(HttpServletRequest request, HttpServletResponse httpResponse,
-//			IdentityObjectFromServer idObj, CompanyDataAccess dataAccess) {
-//		return reSignin(request, httpResponse, idObj.getDevice(), idObj.getBrowser(), dataAccess);
-//	}
-
-//	protected String reSignin(HttpServletRequest request, HttpServletResponse httpResponse, DeviceDbObj device,
-//			CompanyDataAccess dataAccess) {
-//		return reSignin(request, httpResponse, device, null, dataAccess);
-//	}
-//
-
 	protected UrlAndModel addNewToken(ModelMap model, IdentityObjectFromServer idObj, CompanyDataAccess dataAccess) {
 		dataAccess.addLog("start");
 		String nextPage = "resetJwt";
 		try {
 			if (idObj.getBrowser() != null) {
 				String browserId = idObj.getBrowser().getBrowserId();
-				dataAccess.addLog("adding token with browserId:" + browserId);
 				TokenDbObj session = dataAccess.addToken(idObj.getDevice(), browserId, TokenDescription.BROWSER_SESSION,
 						baseUrl);
 				TokenDbObj token = dataAccess.addToken(idObj.getDevice(), browserId, TokenDescription.BROWSER_TOKEN,
@@ -235,10 +176,9 @@ public class Failure extends B2fApi {
 				String cookieString = session.getTokenId() + "**" + token.getTokenId() + "**false";
 				model.addAttribute("b2fSetup", cookieString);
 				model.addAttribute("central", idObj.getDevice().isCentral());
-				dataAccess.addLog("sending to resetJwt");
+				String audience = idObj.getCompany().getCompleteCompanyLoginUrl();
 				String jwt = new JsonWebToken().buildExpiredJwt(
-						new IdentityObjectFromServer(idObj.getCompany(), idObj.getDevice(), idObj.getBrowser(), false));
-				dataAccess.addLog("jwt: " + jwt);
+						new IdentityObjectFromServer(idObj.getCompany(), idObj.getDevice(), idObj.getBrowser(), false), audience);
 				model.addAttribute("jwt", jwt);
 				model.addAttribute("submitUrl", idObj.getCompany().getCompleteCompanyLoginUrl());
 
@@ -248,7 +188,7 @@ public class Failure extends B2fApi {
 				nextPage = "error";
 			}
 		} catch (Exception e) {
-			dataAccess.addLog("error");
+			dataAccess.addLog(e);
 			model.addAttribute("errorMessage", e.getMessage());
 			nextPage = "error";
 		}
@@ -264,29 +204,11 @@ public class Failure extends B2fApi {
 			}
 		}
 		if (!dataAccess.urlMatchesCompany(company, src)) {
-			dataAccess.addLog("trying to set up on bad urlQ " + src, LogConstants.ERROR);
+			dataAccess.addLog("trying to set up on bad url " + src, LogConstants.ERROR);
 			src = null;
 		}
-		dataAccess.addLog(src);
 		return src;
 	}
-
-//	public String getReferrerAndClear(HttpServletRequest request, CompanyDbObj company, DataAccess dataAccess) {
-//		String src = this.getSession(request, "referrer");
-//		if (TextUtils.isEmpty(src)) {
-//			src = this.getSession(request, "url");
-//			// this is sloppy - cjm
-//			if (TextUtils.isEmpty(src)) {
-//				src = company.getCompanyLoginUrl();
-//			} else {
-//				clearReferrer(request);
-//			}
-//		} else {
-//			clearReferrer(request);
-//		}
-//		dataAccess.addLog("getReferrerAndClear", src);
-//		return src;
-//	}
 
 	public HttpServletResponse returnToSender(HttpServletRequest request, HttpServletResponse response,
 			CompanyDbObj company, CompanyDataAccess dataAccess) throws IOException {

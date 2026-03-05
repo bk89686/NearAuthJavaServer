@@ -27,7 +27,7 @@ import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
 import com.humansarehuman.blue2factor.utilities.Encryption;
 import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.Jwts;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
@@ -187,7 +187,7 @@ public class ServerSetup extends BaseController {
 		try {
 			dataAccess.expireKeysByTypeAndDeviceId(KeyType.SERVER_SSH_PUBLIC_KEY, server.getServerId());
 			KeyDbObj key = new KeyDbObj(server.getServerId(), null, null, server.getCompanyId(),
-					KeyType.SERVER_SSH_PUBLIC_KEY, publicKey, true, SignatureAlgorithm.RS256.getJcaName(), null);
+					KeyType.SERVER_SSH_PUBLIC_KEY, publicKey, true, Jwts.SIG.RS256.getId(), null);
 			dataAccess.addKey(key);
 			success = true;
 		} catch (Exception e) {

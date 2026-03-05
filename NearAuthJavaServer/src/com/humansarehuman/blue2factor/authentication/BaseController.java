@@ -561,7 +561,7 @@ public abstract class BaseController {
 		String deviceId = device.getDeviceId();
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		// dataAccess.deactivateOldKeysByTypeAndDevice(keyType, deviceId);
-		dataAccess.addLog(deviceId, "public key text: " + publicKey);
+		dataAccess.addLog(deviceId, "public key text: " + publicKey, LogConstants.TEMPORARILY_IMPORTANT);
 		CompanyDbObj company = dataAccess.getCompanyByDevId(deviceId);
 		if (company != null) {
 			KeyDbObj key = new KeyDbObj(deviceId, null, device.getGroupId(), company.getCompanyId(), keyType, publicKey,
@@ -634,7 +634,7 @@ public abstract class BaseController {
 		// byte[] clientDataJsonBytes = Base64.decodeBase64(clientDataJson64);
 		// String clientDataString =
 		// java.util.Base64.getEncoder().encodeToString(clientDataJsonBytes);
-		Base64 decoder = new Base64(true);
+		Base64 decoder = Base64.builder().setUrlSafe(true).get();
 		byte[] decodedBytes = decoder.decode(clientDataJson64);
 		String result = new String(decodedBytes);
 		DataAccess dataAccess = new DataAccess();
@@ -764,14 +764,14 @@ public abstract class BaseController {
 	protected AdminSignin validateAdminByCookie(HttpServletRequest request, HttpServletResponse response) {
 		String gid = getMainGroupCookie(request);
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
-		dataAccess.addLog("token= '" + gid + "'");
+		dataAccess.addLog("token= '" + gid + "'", LogConstants.TEMPORARILY_IMPORTANT);
 
 		TokenDbObj token = dataAccess.getToken(gid);
 		String reason = "";
 		AdminSignin adminSignin = null;
 
 		if (token != null) {
-			dataAccess.addLog("token= found");
+			dataAccess.addLog("token= found", LogConstants.TEMPORARILY_IMPORTANT);
 			if (token.getPermission() % 2 == 1) {
 				if (token.getExpireTime().after(DateTimeUtilities.getCurrentTimestamp())) {
 					GroupDbObj group = dataAccess.getGroupByToken(gid);
@@ -1153,7 +1153,7 @@ public abstract class BaseController {
 						LogConstants.IMPORTANT);
 				KeyDbObj key = Encryption.getDevicePublicKey(peripheral);
 				if (key != null) {
-					dataAccess.addLog(peripheral.getDeviceId(), "key_text_perf: " + key.getKeyText());
+					dataAccess.addLog(peripheral.getDeviceId(), "key_text_perf: " + key.getKeyText(), LogConstants.TEMPORARILY_IMPORTANT);
 					String[] peripheralInstanceIdPair = new Encryption().createEncryptedInstanceId(key, peripheral,
 							firstLetter);
 					if (peripheralInstanceIdPair != null) {
@@ -1316,24 +1316,25 @@ public abstract class BaseController {
 		boolean admin = false;
 		boolean foundLocally = false;
 		boolean allowed = false;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		String reason = "";
 		CompanyDbObj company = null;
 		company = dataAccess.getCompanyByGroupId(group.getGroupId());
 		if (company != null && company.isActive()) {
 			if (isAdmin(group)) {
 				admin = true;
-				dataAccess.addLog("group is admin", LogConstants.TRACE);
+				dataAccess.addLog("group is admin", logLevel);
 				ArrayList<DeviceDbObj> devices = new DeviceDataAccess().getActiveDevicesByGroupId(group.getGroupId());
 				if (hasDevices(devices)) {
 					dataAccess.addLog("devices found");
 					// TODO: this is flawed logic
 					if (isAnyDeviceProximate(devices)) {
-						dataAccess.addLog("group is proximate", LogConstants.TRACE);
+						dataAccess.addLog("group is proximate", logLevel);
 						allowed = true;
 						foundLocally = true;
 
 					} else {
-						dataAccess.addLog("devices not signed up yet", LogConstants.TRACE);
+						dataAccess.addLog("devices not signed up yet", LogConstants.WARNING);
 						reason = Constants.DEVICE_NOT_LOCAL;
 					}
 				} else {
@@ -1593,9 +1594,10 @@ public abstract class BaseController {
 
 	protected HttpServletResponse setCookie(HttpServletResponse httpResponse, String value, String cookieName,
 			int seconds, boolean httpOnly, String sameSite) {
-		new DataAccess().addLog("setting sameSite for: " + cookieName + " to: " + sameSite + ", httpOnly: " + httpOnly);
+		new DataAccess().addLog("setting sameSite for: " + cookieName + " to: " + sameSite + 
+				", httpOnly: " + httpOnly + ", to value: " + value, LogConstants.TEMPORARILY_IMPORTANT);
 		final ResponseCookie responseCookie = ResponseCookie.from(cookieName, value).secure(true).httpOnly(httpOnly)
-				.path("/").maxAge(seconds).sameSite(sameSite).domain(".blue2factor.com").build();
+				.path("/").maxAge(seconds).sameSite(sameSite).domain(".nearAuth.ai").build();
 		httpResponse.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 		return httpResponse;
 	}

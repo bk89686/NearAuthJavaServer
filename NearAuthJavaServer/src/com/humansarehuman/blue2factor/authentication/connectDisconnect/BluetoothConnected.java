@@ -57,12 +57,12 @@ public class BluetoothConnected extends BaseController {
 			}
 			if (!TextUtils.isBlank(serviceUuid)) {
 				DeviceConnectionDbObj connection = dataAccess.getConnectionByServiceUuid(serviceUuid);
-				if (TextUtils.isBlank(peripheralReference) && connection != null) {
+				if (TextUtils.isBlank(peripheralReference) && connection == null) {
 					reason = "peripheralReference was blank";
 				} else {
 					if (connection != null) {
 						DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId);
-						if (!peripheralReference.equals(connection.getPeripheralIdentifier())) {
+						if (TextUtils.isBlank(peripheralReference) || !peripheralReference.equals(connection.getPeripheralIdentifier())) {
 							if (TextUtils.isBlank(connection.getPeripheralIdentifier())) {
 								dataAccess.addLog(
 										"the peripheral_id was blank in the connection table. We are going to update it, "

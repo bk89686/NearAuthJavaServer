@@ -1,7 +1,7 @@
 package com.humansarehuman.blue2factor.entities.enums;
 
 public enum ConnectionType {
-	PROX("prox"), PUSH("push"), PASSKEY("passkey"), TXT("txt"), ADMIN_CODE("adminCode");
+	PROX("prox"), PUSH("push"), PASSKEY("passkey"), TXT("txt"), ADMIN_CODE("adminCode"), NONMEMBER_ACCESS("nonmemberAccess"), NONE("none");
 
 	private String connectionTypeName;
 
@@ -31,6 +31,12 @@ public enum ConnectionType {
 		case TXT:
 			connType = "text message";
 			break;
+		case NONMEMBER_ACCESS:
+			connType = "non-member access";
+			break;
+		case NONE:
+			connType = "none";
+			break;
 		default:
 			connType = "unknown connection type";
 			break;
@@ -56,6 +62,12 @@ public enum ConnectionType {
 				break;
 			case "adminCode":
 				connType = ADMIN_CODE;
+				break;
+			case "nonmemberAccess":
+				connType = NONMEMBER_ACCESS;
+				break;
+			case "none":
+				connType = NONE;
 				break;
 			}
 		}

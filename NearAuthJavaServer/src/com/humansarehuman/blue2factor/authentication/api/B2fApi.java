@@ -2,11 +2,8 @@ package com.humansarehuman.blue2factor.authentication.api;
 
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.http.util.TextUtils;
-import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.messaging.context.MessageContext;
@@ -97,15 +94,10 @@ public class B2fApi extends BaseController {
 		return group;
 	}
 
-	protected String doesUrlMatchRegex(CompanyDbObj company, String siteUrl) {
-		String regEx = company.getUrlRegex();
+	protected String doesUrlMatchRegex(CompanyDbObj company, String siteUrl, CompanyDataAccess dataAccess) {
 		String entityId = null;
-		if (!TextUtils.isBlank(regEx)) {
-			Pattern pattern = Pattern.compile(regEx);
-			Matcher matcher = pattern.matcher(siteUrl);
-			if (matcher.find()) {
-				entityId = Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", company.getApiKey());
-			}
+		if (dataAccess.urlMatchesCompany(company, siteUrl)) {
+			entityId = Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", company.getApiKey());
 		}
 		return entityId;
 	}
@@ -287,7 +279,8 @@ public class B2fApi extends BaseController {
 		model.addAttribute("central", idObj.getDevice().isCentral());
 		dataAccess.addLog("setting b2fSetup to " + cookieString);
 		String jwt = new JsonWebToken().buildExpiredJwt(
-				new IdentityObjectFromServer(idObj.getCompany(), idObj.getDevice(), idObj.getBrowser(), false));
+				new IdentityObjectFromServer(idObj.getCompany(), idObj.getDevice(), idObj.getBrowser(), false),
+				idObj.getCompany().getCompleteCompanyLoginUrl());
 		dataAccess.addLog("jwt: " + jwt);
 		model.addAttribute("jwt", jwt);
 		model.addAttribute("submitUrl", idObj.getCompany().getCompleteCompanyLoginUrl());
@@ -377,7 +370,7 @@ public class B2fApi extends BaseController {
 		dataAccess.addLog("start");
 		MessageContext messageContext = new MessageContext();
 		messageContext.setMessage(samlResponse);
-		InitializationService.initialize();
+		Saml.initializeSaml();
 		XMLObjectBuilderFactory builderFactory = XMLObjectProviderRegistrySupport.getBuilderFactory();
 		@SuppressWarnings("unchecked")
 		SAMLObjectBuilder<Endpoint> endpointBuilder = (SAMLObjectBuilder<Endpoint>) builderFactory
@@ -411,7 +404,7 @@ public class B2fApi extends BaseController {
 		dataAccess.addLog("start");
 		MessageContext messageContext = new MessageContext();
 		messageContext.setMessage(samlRequest);
-		InitializationService.initialize();
+		Saml.initializeSaml();
 		XMLObjectBuilderFactory builderFactory = XMLObjectProviderRegistrySupport.getBuilderFactory();
 		SAMLObjectBuilder<Endpoint> endpointBuilder = (SAMLObjectBuilder<Endpoint>) builderFactory
 				.getBuilder(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
@@ -446,7 +439,7 @@ public class B2fApi extends BaseController {
 		MessageContext messageContext = new MessageContext();
 		// this is the message that came in, which is not what we want
 		messageContext.setMessage(samlRequest);
-		InitializationService.initialize();
+		Saml.initializeSaml();
 		XMLObjectBuilderFactory builderFactory = XMLObjectProviderRegistrySupport.getBuilderFactory();
 		SAMLObjectBuilder<Endpoint> endpointBuilder = (SAMLObjectBuilder<Endpoint>) builderFactory
 				.getBuilder(AssertionConsumerService.DEFAULT_ELEMENT_NAME);

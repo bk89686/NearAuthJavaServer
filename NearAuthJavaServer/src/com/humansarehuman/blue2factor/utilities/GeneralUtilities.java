@@ -12,6 +12,8 @@ import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.NetworkInterface;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -209,11 +211,12 @@ public class GeneralUtilities {
 		String result = "";
 		DataAccess dataAccess = new DataAccess();
 		try {
-			url = new URL(urlString);
+			URI uri = new URI(urlString);
+			url = uri.toURL();
 			URLConnection conn = url.openConnection();
 			InputStream is = conn.getInputStream();
 			result = IOUtils.toString(is, StandardCharsets.UTF_8);
-		} catch (IOException e) {
+		} catch (IOException | URISyntaxException e) {
 			dataAccess.addLog("readUrl", e);
 		}
 		return result;
@@ -288,7 +291,7 @@ public class GeneralUtilities {
 
 	public static String randomString(int len) {
 		RandomStringGenerator generator = new RandomStringGenerator.Builder().withinRange('0', 'z')
-				.filteredBy(LETTERS, DIGITS).build();
+				.filteredBy(LETTERS, DIGITS).get();
 		String randomLetters = generator.generate(len);
 		return randomLetters;
 	}
@@ -300,14 +303,14 @@ public class GeneralUtilities {
 
 	public static String randomNumberString(int len) {
 		RandomStringGenerator generator = new RandomStringGenerator.Builder().withinRange('0', '9').filteredBy(DIGITS)
-				.build();
+				.get();
 		String randomStr = generator.generate(len);
 		return randomStr;
 	}
 
 	public static String randomLetters(int len) {
 		RandomStringGenerator generator = new RandomStringGenerator.Builder().withinRange('A', 'z').filteredBy(LETTERS)
-				.build();
+				.get();
 
 		String randomLetters = generator.generate(len);
 		randomLetters.replace("o", "R").replace("O", "w").replace("l", "P").replace("I", "U");
@@ -339,7 +342,8 @@ public class GeneralUtilities {
 	public static String getNakedDomain(String urlString) {
 		String nakedDomain = null;
 		try {
-			URL url = new URL(urlString);
+			URI uri = new URI(urlString);
+			URL url = uri.toURL();
 			String host = url.getHost();
 			InternetDomainName idf = InternetDomainName.from(host);
 			nakedDomain = idf.topPrivateDomain().toString();
@@ -353,9 +357,10 @@ public class GeneralUtilities {
 	public static String getUrlProtocolAndHost(String url) {
 		String urlAndHost = null;
 		try {
-			URL aURL = new URL(url);
+			URI uri = new URI(url);
+			URL aURL = uri.toURL();
 			urlAndHost = aURL.getProtocol() + "://" + aURL.getHost();
-		} catch (MalformedURLException e) {
+		} catch (MalformedURLException | URISyntaxException e) {
 			new DataAccess().addLog("bad url: " + url, LogConstants.WARNING);
 		}
 		return urlAndHost;
@@ -367,12 +372,13 @@ public class GeneralUtilities {
 		}
 		String host = null;
 		try {
-			URL aURL = new URL(baseUrl);
+			URI uri = new URI(baseUrl);
+			URL aURL = uri.toURL();
 			host = aURL.getHost();
 			if (host.endsWith("/")) {
 				host = host.substring(0, host.length() - 1);
 			}
-		} catch (MalformedURLException e) {
+		} catch (MalformedURLException | URISyntaxException e) {
 			new DataAccess().addLog("bad url: " + baseUrl, LogConstants.ERROR);
 		}
 		return host;
@@ -384,13 +390,14 @@ public class GeneralUtilities {
 		}
 		String path = null;
 		try {
-			URL aURL = new URL(url);
+			URI uri = new URI(url);
+			URL aURL = uri.toURL();
 			path = aURL.getPath();
 			if (path.endsWith("/")) {
 				path = path.substring(0, path.length() - 1);
 			}
 			new DataAccess().addLog("getUrlPath: " + path, LogConstants.TRACE);
-		} catch (MalformedURLException e) {
+		} catch (MalformedURLException | URISyntaxException e) {
 			new DataAccess().addLog("bad url: " + url, LogConstants.ERROR);
 		}
 		return path;

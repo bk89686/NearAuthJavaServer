@@ -360,8 +360,15 @@ public class TimeSearch extends B2fApi {
 			case PUSH:
 				connStr = "by responding to a push notification";
 				break;
+			case NONE:
+				connStr = "not connected";
+				break;
 			case TXT:
 				connStr = "by entering a texted code";
+				break;
+			case NONMEMBER_ACCESS:
+				connStr = "non-member access";
+				break;
 			}
 			return connStr;
 		}

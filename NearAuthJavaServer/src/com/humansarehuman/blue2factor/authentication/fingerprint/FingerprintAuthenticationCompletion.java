@@ -30,17 +30,19 @@ import com.humansarehuman.blue2factor.entities.tables.AuthenticatorDbObj;
 import com.humansarehuman.blue2factor.entities.tables.CompanyDbObj;
 import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 import com.webauthn4j.WebAuthnManager;
-import com.webauthn4j.authenticator.Authenticator;
-import com.webauthn4j.authenticator.AuthenticatorImpl;
+import com.webauthn4j.converter.CollectedClientDataConverter;
 import com.webauthn4j.converter.exception.DataConversionException;
+import com.webauthn4j.converter.util.ObjectConverter;
+import com.webauthn4j.credential.CredentialRecord;
+import com.webauthn4j.credential.CredentialRecordImpl;
 import com.webauthn4j.data.AuthenticationData;
 import com.webauthn4j.data.AuthenticationParameters;
 import com.webauthn4j.data.AuthenticationRequest;
+import com.webauthn4j.data.client.CollectedClientData;
 import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.data.client.challenge.Challenge;
 import com.webauthn4j.data.client.challenge.DefaultChallenge;
 import com.webauthn4j.server.ServerProperty;
-import com.webauthn4j.validator.exception.ValidationException;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
@@ -67,7 +69,7 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 		String reqUrl = auth.getReqUrl();
 		dataAccess.addLog("FingerprintAuthenticationCompletion", "reqUrl: " + reqUrl + "; ");
 		CompanyDbObj company = dataAccess.getCompanyByToken(browserSession);
-		if (this.doesUrlMatchRegex(company, reqUrl) != "") {
+		if (this.doesUrlMatchRegex(company, reqUrl, dataAccess) != "") {
 			response = new GeneralUtilities().setResponseHeader(response, reqUrl);
 			apiResponse = handleFingerprintCompletion(request, auth);
 		} else {
@@ -86,7 +88,12 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 		String credIdStr = auth.getId();
 		byte[] credentialId = credIdStr.getBytes();
 		byte[] authenticatorData = Base64.getUrlDecoder().decode(authResp.getAuthenticatorData());
-		byte[] clientDataJSON = Base64.getUrlDecoder().decode(authResp.getClientDataJSON());
+		byte[] clientDataJSONBytes= Base64.getUrlDecoder().decode(authResp.getClientDataJSON());
+		ObjectConverter objConverter = new ObjectConverter();
+		CollectedClientDataConverter collectedClientDataConverter = new CollectedClientDataConverter(objConverter);
+        
+		CollectedClientData collectedClientData = collectedClientDataConverter.convert(clientDataJSONBytes);
+		
 		byte[] signature = Base64.getUrlDecoder().decode(authResp.getSignature());
 
 		dataAccess.addLog("handleFingerprintCompletion", "#2: " + Arrays.toString(signature));
@@ -101,33 +108,36 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 			dataAccess.addLog("handleFingerprintCompletion", "rpId: " + rpId);
 			dataAccess.addLog("handleFingerprintCompletion", "challenge: " + authDbObj.getChallenge());
 			Challenge challenge = new DefaultChallenge(authDbObj.getChallenge());
-			byte[] tokenBindingId = new byte[] { 0x01, 0x23, 0x45 };
-			ServerProperty serverProperty = new ServerProperty(origin, rpId, challenge, tokenBindingId);
+//			byte[] tokenBindingId = new byte[] { 0x01, 0x23, 0x45 };
+//			ServerProperty serverPropertyOld = new ServerProperty(origin, rpId, challenge, tokenBindingId);
+			ServerProperty serverProperty = ServerProperty.builder().origin(origin).rpId(rpId).challenge(challenge).build();
 			List<byte[]> allowCredentials = null;
 			boolean userVerificationRequired = true;
 			boolean userPresenceRequired = true;
 
-			Authenticator authenticator = new AuthenticatorImpl(authDbObj.getAttestedCredentialData(),
-					authDbObj.getAttestationObject().getAttestationStatement(), authDbObj.getSignCount());
+//			Authenticator authenticator = new AuthenticatorImpl(authDbObj.getAttestedCredentialData(),
+//					authDbObj.getAttestationObject().getAttestationStatement(), authDbObj.getSignCount());
+			CredentialRecord credentialRecord = new CredentialRecordImpl(authDbObj.getAttestationObject(), collectedClientData, null, null);
 			dataAccess.addLog("handleFingerprintCompletion", "authenticator created");
 			AuthenticationRequest authenticationRequest = new AuthenticationRequest(credentialId, authenticatorData,
-					clientDataJSON, signature);
+					clientDataJSONBytes, signature);
 			AuthenticationParameters authenticationParameters = new AuthenticationParameters(serverProperty,
-					authenticator, allowCredentials, userVerificationRequired, userPresenceRequired);
+					credentialRecord, allowCredentials, userVerificationRequired, userPresenceRequired);
 			AuthenticationData authenticationData;
 			WebAuthnManager webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
 			try {
 				authenticationData = webAuthnManager.parse(authenticationRequest);
 				try {
 					dataAccess.addLog("handleFingerprintCompletion", "authenticationData parsed");
-					webAuthnManager.validate(authenticationData, authenticationParameters);
+					webAuthnManager.verify(authenticationData, authenticationParameters);
+//					webAuthnManager.validate(authenticationData, authenticationParameters);
 					dataAccess.addLog("handleFingerprintCompletion", "webAuthnManager validated", LogConstants.TRACE);
 					String session = dataAccess.addCompletedCheckForFingerprint(this, browserSession, request);
 					if (session != null) {
 						reason = session;
 						outcome = Outcomes.SUCCESS;
 					}
-				} catch (ValidationException e) {
+				} catch (Exception e) {
 					dataAccess.addLog("handleFingerprintCompletion", e);
 					reason = Constants.SIGNATURE_VALIDATION_FAILED;
 				}

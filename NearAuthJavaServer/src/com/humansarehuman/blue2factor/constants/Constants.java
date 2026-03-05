@@ -60,6 +60,7 @@ public class Constants {
 	public final static String BROWSER_EXPIRED = "browser was expired";
 	public final static String CHECK_FIRST_FACTOR = "check first factor";
 	public final static String CHECK_NOT_FOUND = "check not found";
+	public final static String DEVICE_ASLEEP = "device asleep";
 	public final static String SSL_CONNECTION_NOT_SETUP = "ssl connection not setup";
 	public final static String CO_NOT_FOUND = "company was not found";
 

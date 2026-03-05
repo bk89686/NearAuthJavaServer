@@ -153,7 +153,9 @@ import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
 import com.humansarehuman.blue2factor.utilities.Encryption;
 import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 
-import net.shibboleth.utilities.java.support.xml.BasicParserPool;
+import net.shibboleth.shared.xml.impl.BasicParserPool;
+
+//import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 
 public class Saml extends BaseController {
 
@@ -330,7 +332,7 @@ public class Saml extends BaseController {
 		DataAccess dataAccess = new DataAccess();
 		try {
 
-			InitializationService.initialize();
+			Saml.initializeSaml();
 			MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 			Marshaller marshaller = marshallerFactory.getMarshaller(assertion);
 
@@ -569,7 +571,7 @@ public class Saml extends BaseController {
 		entityDescriptor.setSignature(signature);
 		Element plain;
 		try {
-			InitializationService.initialize();
+			Saml.initializeSaml();
 			MarshallerFactory marshallFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 			Marshaller marshaller = marshallFactory.getMarshaller(entityDescriptor);
 			plain = marshaller.marshall(entityDescriptor);
@@ -737,7 +739,7 @@ public class Saml extends BaseController {
 		String entityDescriptorString = null;
 
 		try {
-			InitializationService.initialize();
+			Saml.initializeSaml();
 			MarshallerFactory marshallFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 			Marshaller marshaller = marshallFactory.getMarshaller(entityDescriptor);
 			plain = marshaller.marshall(entityDescriptor);
@@ -784,7 +786,7 @@ public class Saml extends BaseController {
 					access.getAccessCode(), Outcomes.UNKNOWN_STATUS, sender);
 
 			dataAccess.addSamlAuthnRequest(samlAuthnRequest);
-			dataAccess.addLog("buildAndSaveAuthnRequestObj", "(1) after addSamlAuthnRequest at " + now);
+			dataAccess.addLog("buildAndSaveAuthnRequestObj", "(1) after addSamlAuthnRequest, sender " + sender, LogConstants.TEMPORARILY_IMPORTANT);
 		} else {
 			dataAccess.addLog("buildAndSaveAuthnRequestObj", "accessCode was null", LogConstants.ERROR);
 		}
@@ -842,6 +844,7 @@ public class Saml extends BaseController {
 		AccessCodeDbObj accessCode = new AccessCodeDbObj(GeneralUtilities.randomString(), company.getCompanyId(), null,
 				deviceId, 0, true, browserId, false);
 		dataAccess.addAccessCode(accessCode, "buildAndSaveAuthnRequestObj");
+		dataAccess.addLog("building new Auth request", LogConstants.TEMPORARILY_IMPORTANT);
 		Timestamp issueInstant = DateTimeUtilities.instantToTimestamp(incomingAuthnRequest.getIssueInstant());
 		samlAuthnRequest = new SamlAuthnRequestDbObj(samlIdp.getIdentityProviderName(), now, samlIdp.getTableId(),
 				outgoingAuthnRequest.getID(), incomingAuthnRequest.getID(), outgoingRelayState, incomingRelayState,
@@ -947,13 +950,14 @@ public class Saml extends BaseController {
 			} else {
 				dataAccess.addLog("without device");
 			}
+			
 			samlAuthnRequest = new SamlAuthnRequestDbObj("blue2factor", now, null, null, incomingRequestId, null,
 					incomingRelayState, new Timestamp(authnRequest.getIssueInstant().toEpochMilli()), issuer, null,
 					incomingAcsUrl, SignatureStatus.UNVALIDATE, encryptedRequest, ipAddress, false,
 					company.getCompanyId(), groupId, deviceId, browserSession, Outcomes.UNKNOWN_STATUS,
 					authnRequest.getProviderName());
 			dataAccess.addSamlAuthnRequest(samlAuthnRequest);
-			dataAccess.addLog("(2) after addSamlAuthnRequest at " + now + "; group id: " + groupId);
+			dataAccess.addLog("(2) after addSamlAuthnRequest at " + now + "; group id: " + groupId, LogConstants.TEMPORARILY_IMPORTANT);
 		} catch (Exception e) {
 			dataAccess.addLog(e);
 		}
@@ -977,7 +981,7 @@ public class Saml extends BaseController {
 				null, false, company.getCompanyId(), groupId, deviceId, "", Outcomes.UNKNOWN_STATUS, sender);
 		SamlDataAccess dataAccess = new SamlDataAccess();
 		dataAccess.addSamlAuthnRequest(samlAuthnRequest);
-		dataAccess.addLog("buildAndSaveAuthnRequestObj", "(3) after addSamlAuthnRequest at " + now);
+		dataAccess.addLog("buildAndSaveAuthnRequestObj", "(3) after addSamlAuthnRequest at " + now, LogConstants.TEMPORARILY_IMPORTANT);
 		return samlAuthnRequest;
 	}
 
@@ -1004,12 +1008,25 @@ public class Saml extends BaseController {
 		AuthnRequest authnRequest = buildAuthnRequest(identityProvider, company, authId, forceReauth);
 		return authnRequestToString(authnRequest, identityProvider.isSignRequest());
 	}
+	
+	private static boolean samlIsInitialized = false;
+	public static void initializeSaml() {
+		if (!samlIsInitialized) {
+			try {
+				InitializationService.initialize();
+				samlIsInitialized = true;
+			} catch (Exception e) {
+				new DataAccess().addLog(e);
+			}
+		}
+	}
+	
 
 	public String authnRequestToString(AuthnRequest authnRequest, boolean signRequest) {
 		String authnRequestString = null;
 		DataAccess dataAccess = new DataAccess();
 		try {
-			InitializationService.initialize();
+			Saml.initializeSaml();
 			MarshallerFactory marshallFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 			Marshaller marshaller = marshallFactory.getMarshaller(authnRequest);
 			Element plain = marshaller.marshall(authnRequest);
@@ -1028,7 +1045,7 @@ public class Saml extends BaseController {
 		String logoutRequestString = null;
 		DataAccess dataAccess = new DataAccess();
 		try {
-			InitializationService.initialize();
+			Saml.initializeSaml();
 			MarshallerFactory marshallFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 			Marshaller marshaller = marshallFactory.getMarshaller(logoutRequest);
 			Element plain = marshaller.marshall(logoutRequest);
@@ -1183,7 +1200,7 @@ public class Saml extends BaseController {
 			Element samlElem = doc.getDocumentElement();
 			String node = samlElem.getNodeName();
 			dataAccess.addLog("samlElem: " + node);
-			InitializationService.initialize();
+			Saml.initializeSaml();
 			UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 			if (unmarshallerFactory == null) {
 				dataAccess.addLog("unmarshallerFactory is null");
@@ -1205,16 +1222,16 @@ public class Saml extends BaseController {
 			}
 			dataAccess.addLog(requestXmlObj.toString());
 			authRequest = (AuthnRequest) requestXmlObj;
-			logAuthnRequest(authRequest, dataAccess);
+//			logAuthnRequest(authRequest, dataAccess);
 		} catch (Exception e) {
 			dataAccess.addLog(e);
 		}
 		return authRequest;
 	}
 
-	public void logAuthnRequest(AuthnRequest authnRequest, DataAccess dataAccess) {
-		dataAccess.addLog(authnRequestToString(authnRequest, false));
-	}
+//	public void logAuthnRequest(AuthnRequest authnRequest, DataAccess dataAccess) {
+//		dataAccess.addLog(authnRequestToString(authnRequest, false));
+//	}
 
 	public void logAuthnResponse(Response resp, DataAccess dataAccess) {
 		ResponseMarshaller marshaller = new ResponseMarshaller();

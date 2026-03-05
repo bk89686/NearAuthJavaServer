@@ -43,8 +43,8 @@ import com.webauthn4j.data.client.Origin;
 import com.webauthn4j.data.client.challenge.Challenge;
 import com.webauthn4j.data.client.challenge.DefaultChallenge;
 import com.webauthn4j.server.ServerProperty;
-import com.webauthn4j.validator.exception.BadChallengeException;
-import com.webauthn4j.validator.exception.ValidationException;
+
+
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
@@ -91,9 +91,9 @@ public class FingerprintRegistrationCompletion extends B2fApi {
 				String rpId = cred.getRpId();
 				dataAccess.addLog(device.getDeviceId(), "rpId: " + rpId, logLevel);
 				Challenge challenge = new DefaultChallenge(authenticator.getChallenge());
-				byte[] tokenBindingId = new byte[] { 0x01, 0x23, 0x45 };
-				ServerProperty serverProperty = new ServerProperty(origin, rpId, challenge, tokenBindingId);
-
+//				byte[] tokenBindingId = new byte[] { 0x01, 0x23, 0x45 };
+//				ServerProperty serverProperty = new ServerProperty(origin, rpId, challenge, tokenBindingId);
+				ServerProperty serverProperty = ServerProperty.builder().origin(origin).rpId(rpId).challenge(challenge).build();
 				// expectations
 				boolean userVerificationRequired = false;
 				boolean userPresenceRequired = true;
@@ -102,18 +102,20 @@ public class FingerprintRegistrationCompletion extends B2fApi {
 
 				List<PublicKeyCredentialParameters> pubKeyCredParams = fpResponse.getPubKeyCredParams();
 
-				RegistrationParameters registrationParameters = new RegistrationParameters(serverProperty,
-						pubKeyCredParams, userVerificationRequired, userPresenceRequired);
+				
 				RegistrationData registrationData;
 				WebAuthnManager webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
 				try {
+					
 					dataAccess.addLog(device.getDeviceId(), "webAuthnManager created", logLevel);
 					registrationData = webAuthnManager.parse(registrationRequest);
-
+					
+					RegistrationParameters registrationParameters = new RegistrationParameters(serverProperty,
+							pubKeyCredParams, userVerificationRequired, userPresenceRequired);
 					try {
-						webAuthnManager.validate(registrationData, registrationParameters);
+						webAuthnManager.verify(registrationData, registrationParameters);
 						dataAccess.addLog(device.getDeviceId(), "webAuthnManager validated", logLevel);
-					} catch (ValidationException e) {
+					} catch (Exception e) {
 						dataAccess.addLog(device.getDeviceId(), e);
 					}
 					String credId = cred.getId();
@@ -146,10 +148,6 @@ public class FingerprintRegistrationCompletion extends B2fApi {
 				reason = "auth record not found";
 				dataAccess.addLog(reason, LogConstants.ERROR);
 			}
-		} catch (BadChallengeException bce) {
-			reason = "bad challange";
-			dataAccess.addLog(bce);
-			dataAccess.addLog("bad challenge", LogConstants.ERROR);
 		} catch (Exception e) {
 			dataAccess.addLog(e);
 			reason = e.getLocalizedMessage();

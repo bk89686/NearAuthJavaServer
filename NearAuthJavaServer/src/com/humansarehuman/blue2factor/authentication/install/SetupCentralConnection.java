@@ -146,7 +146,7 @@ public class SetupCentralConnection extends BaseController {
 		centralDevice.setDevicePriority(priority);
 
 		dataAccess.updateDevice(centralDevice, "setupCentralDevice");
-		dataAccess.addLog("b2fId = " + b2fId);
+		dataAccess.addLog("setup central connection: " + b2fId, LogConstants.REALLY_IMPORTANT);
 		addDevicePublicKey(centralDevice, centralDevice.getGroupId(), publicKey, "");
 		if (TextUtils.isBlank(peripheralDevice.getGroupId())) {
 			dataAccess.setGroupId(peripheralDevice, centralDevice.getGroupId());

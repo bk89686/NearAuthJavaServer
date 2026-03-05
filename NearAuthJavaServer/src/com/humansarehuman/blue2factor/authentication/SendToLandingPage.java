@@ -42,7 +42,8 @@ public class SendToLandingPage extends B2fApi {
 			BrowserDbObj browser = dataAccess.getBrowserByToken(authToken, TokenDescription.AUTHENTICATION);
 			if (browser != null) {
 				IdentityObjectFromServer idObj = new IdentityObjectFromServer(browser, false);
-				String jwt = new JsonWebToken().buildJwt(idObj);
+				String audience = idObj.getCompany().getCompleteCompanyLoginUrl();
+				String jwt = new JsonWebToken().buildJwt(idObj, audience);
 				url = idObj.getCompany().getCompleteCompanyLoginUrl();
 				response.setHeader("Authorization", "Bearer " + jwt);
 				dataAccess.addLog("Bearer " + jwt);

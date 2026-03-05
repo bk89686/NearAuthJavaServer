@@ -12,9 +12,9 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.shibboleth.shared.xml.impl.BasicParserPool;
 
 import org.apache.http.util.TextUtils;
-import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Unmarshaller;
@@ -67,7 +67,6 @@ import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
 import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 import com.humansarehuman.blue2factor.utilities.saml.Saml;
 
-import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 
 public class SamlAndLdapResponse extends B2fApi {
 	public class OutcomeAndResponse {
@@ -177,7 +176,7 @@ public class SamlAndLdapResponse extends B2fApi {
 			urlModelAndHttpResponse = new UrlModelAndHttpResponse(outcomeRequest.nextPage, outcomeRequest.model,
 					outcomeRequest.httpServletResponse, outcomeRequest.outcome);
 		} else {
-			dataAccess.addLog("idObj not found");
+			dataAccess.addLog("idObj not found", LogConstants.WARNING);
 			GroupDbObj group = dataAccess.getGroupByEmail(email);
 			boolean newlySignedUp = false;
 			if (group != null) {
@@ -209,11 +208,11 @@ public class SamlAndLdapResponse extends B2fApi {
 			IdentityObjectFromServer idObj, String ipAddress, String relayState, String email, String samlResponse,
 			SamlDataAccess dataAccess) {
 		int outcome = Outcomes.FAILURE;
-		dataAccess.addLog("device is not null");
+		dataAccess.addLog("device is not null", LogConstants.TEMPORARILY_IMPORTANT);
 		String nextPage = null;
 		GroupDbObj group = idObj.getGroup();
 		if (group != null) {
-			dataAccess.addLog("group is not null");
+			dataAccess.addLog("group is not null", LogConstants.TEMPORARILY_IMPORTANT);
 			if (isGroupNameEquivalent(group.getGroupName(), email)) {
 				try {
 //					idObj.getDevice().setSignedIn(true);
@@ -338,7 +337,7 @@ public class SamlAndLdapResponse extends B2fApi {
 	public UrlModelAndHttpResponse evaluateResponse(HttpServletRequest request, HttpServletResponse httpResponse,
 			ModelMap model, String samlResponse, String relayState, String apiKey) {
 		SamlDataAccess dataAccess = new SamlDataAccess();
-		dataAccess.addLog("post or get received");
+		dataAccess.addLog("post or get received, " + samlResponse);
 		UrlModelAndHttpResponse fnResponse = new UrlModelAndHttpResponse(null, model, httpResponse, Outcomes.FAILURE);
 		SamlAuthnRequestDbObj samlAuthRequest = null;
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);
@@ -346,7 +345,8 @@ public class SamlAndLdapResponse extends B2fApi {
 			if (!TextUtils.isEmpty(relayState)) {
 				byte[] decodedBytes = Base64.getDecoder().decode(samlResponse);
 				String decryptedResponse = new String(decodedBytes, StandardCharsets.UTF_8);
-				dataAccess.addLog("decoded bytes: '" + decryptedResponse + "' - RelayState: '" + relayState + "'");
+				dataAccess.addLog("decoded bytes: '" + decryptedResponse + "' - RelayState: '" + relayState + "'", 
+						LogConstants.TEMPORARILY_IMPORTANT);
 				Response response = getSamlResponse(decodedBytes);
 				new Saml().logAuthnResponse(response, dataAccess);
 
@@ -358,7 +358,7 @@ public class SamlAndLdapResponse extends B2fApi {
 							samlAuthRequest = dataAccess.getAuthRequestByOutgoingRequestId(inResponseTo);
 							String email = getEmailFromResponse(response, dataAccess);
 							if (samlAuthRequest != null) {
-								dataAccess.addLog("sender: " + samlAuthRequest.getSender());
+								dataAccess.addLog("sender: " + samlAuthRequest.getSender(), LogConstants.TEMPORARILY_IMPORTANT);
 								fnResponse.setOutcome(validateIdpResponse(response, samlAuthRequest, company,
 										dataAccess, ipAddress, true));
 								if (fnResponse.getOutcome() == Outcomes.SUCCESS) {
@@ -381,17 +381,17 @@ public class SamlAndLdapResponse extends B2fApi {
 										dataAccess);
 							}
 						} else {
-							dataAccess.addLog("bad status");
+							dataAccess.addLog("bad status", LogConstants.ERROR);
 						}
 					} catch (Exception e) {
 						dataAccess.addLog(e);
 					}
 				} else {
-					dataAccess.addLog("company not found");
+					dataAccess.addLog("company not found", LogConstants.ERROR);
 				}
 				dataAccess.addLog("nextPage: " + fnResponse.getUrl());
 			} else {
-				dataAccess.addLog("relayState was null");
+				dataAccess.addLog("relayState was null", LogConstants.ERROR);
 			}
 		} catch (Exception e1) {
 			dataAccess.addLog(e1);
@@ -464,7 +464,7 @@ public class SamlAndLdapResponse extends B2fApi {
 			Element samlElem = doc.getDocumentElement();
 			String node = samlElem.getNodeName();
 			dataAccess.addLog("samlElem: " + node);
-			InitializationService.initialize();
+			Saml.initializeSaml();
 			UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 			if (unmarshallerFactory == null) {
 				dataAccess.addLog("unmarshallerFactory is null");
@@ -770,7 +770,7 @@ public class SamlAndLdapResponse extends B2fApi {
 		Saml saml = new Saml();
 		boolean success = outcome == Outcomes.SUCCESS;
 		saml.buildResponseFromIncomingSamlRecord(samlAuthnRequest, group, apiKey, entityIdVal, success, dataAccess);
-		new DataAccess().addLog("found samlresponse - now we will redirect back to service provider");
+		new DataAccess().addLog("found samlresponse - now we will redirect back to service provider", LogConstants.TEMPORARILY_IMPORTANT);
 		String relayState = samlAuthnRequest.getIncomingRelayState();
 		// post the relaystate and samlResponse
 		model.addAttribute("action", samlAuthnRequest.getIncomingAcsUrl());
@@ -1022,11 +1022,11 @@ public class SamlAndLdapResponse extends B2fApi {
 		int outcome = Outcomes.FAILURE;
 		if (group != null) {
 			if (!samlDataAccess.doesConnectionExistByEmail(email)) {
-				samlDataAccess.addLog("user found, not yet activated");
+				samlDataAccess.addLog("user found, not yet activated", LogConstants.TEMPORARILY_IMPORTANT);
 				outcome = Outcomes.SUCCESS;
 			} else {
 				// they are signed up
-				samlDataAccess.addLog("user found, they are signed up");
+				samlDataAccess.addLog("user found, they are signed up", LogConstants.TEMPORARILY_IMPORTANT);
 				DeviceDbObj device = idObj.getDevice();
 				samlDataAccess.setSignedIn(device, true);
 				if (TextUtils.isBlank(samlAuthnRequest.getGroupId())) {
@@ -1075,6 +1075,7 @@ public class SamlAndLdapResponse extends B2fApi {
 			SamlAuthnRequestDbObj samlAuthnRequest, SamlDataAccess samlDataAccess) {
 		UrlModelAndHttpResponse response;
 		if (!TextUtils.isEmpty(samlAuthnRequest.getIncomingRelayState())) {
+			samlDataAccess.addLog("redirecting back to the SP", LogConstants.TEMPORARILY_IMPORTANT);
 			UrlAndModel urlAndModel = this.respondToSp(model, samlAuthnRequest, idObj.getGroup(),
 					idObj.getCompany().getApiKey(), idObj.getCompany().getEntityIdVal(), Outcomes.SUCCESS,
 					samlDataAccess);
@@ -1082,6 +1083,7 @@ public class SamlAndLdapResponse extends B2fApi {
 		} else {
 			Failure failure = new Failure();
 			String redirectUrl = failure.getReferrer(request, idObj.getCompany(), samlDataAccess);
+			samlDataAccess.addLog("redirecting to: " + redirectUrl, LogConstants.TEMPORARILY_IMPORTANT);
 			httpResponse.setHeader("Location", redirectUrl);
 			httpResponse.setStatus(302);
 			response = new UrlModelAndHttpResponse(null, model, httpResponse);
@@ -1180,17 +1182,16 @@ public class SamlAndLdapResponse extends B2fApi {
 							outcome = validateSignature(response, samlIdp, samlDataAccess);
 							if (outcome == Outcomes.SUCCESS) {
 								updateSignedIn(samlAuthnRequest, samlDataAccess);
-								samlDataAccess.addLog("getOutcomeFromResponse", "full steam ahead");
+								samlDataAccess.addLog("full steam ahead", LogConstants.TEMPORARILY_IMPORTANT);
 							}
 						} catch (Exception e) {
-							samlDataAccess.addLog("getOutcomeFromResponse", e);
+							samlDataAccess.addLog(e);
 						}
 					}
 				}
 			}
 			samlAuthnRequest = samlDataAccess.updateSamlAuthnRequestOutcome(samlAuthnRequest, outcome, ipAddress);
 		}
-		samlDataAccess.addLog("outcome: " + outcome);
 		return outcome;
 	}
 
@@ -1565,7 +1566,7 @@ public class SamlAndLdapResponse extends B2fApi {
 			dataAccess.addLog("validateStatus", response.getStatus().getStatusCode().getValue());
 			success = response.getStatus().getStatusCode().getValue().equals(StatusCode.SUCCESS);
 		} catch (Exception e) {
-			dataAccess.addLog("validateStatus", "bad status");
+			dataAccess.addLog("validateStatus", "bad status", LogConstants.WARNING);
 		}
 		dataAccess.addLog("validateStatus", "success: " + success);
 		return success;

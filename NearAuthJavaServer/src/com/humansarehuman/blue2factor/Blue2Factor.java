@@ -21,6 +21,7 @@ import java.security.SignatureException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -34,10 +35,7 @@ import com.humansarehuman.blue2factor.dataAndAccess.DataAccess;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.JwtParserBuilder;
 import io.jsonwebtoken.Jwts;
 
 /**
@@ -198,7 +196,7 @@ public class Blue2Factor {
 					Date exp = claims.getExpiration();
 					Date notBefore = claims.getNotBefore();
 					String issuer = claims.getIssuer();
-					String audience = claims.getAudience();
+					Set<String> audience = claims.getAudience();
 					String jwtTokenId = claims.getId();
 					Date now = new Date();
 					if (exp.after(now)) {
@@ -207,11 +205,11 @@ public class Blue2Factor {
 							if (notEmpty(jwtTokenId)) {
 								url = this.getIssuer(currentUrl, companyId, privateKey);
 								if (!TextUtils.isEmpty(url) && issuer.equals(url)) {
-									if (audience.equals(url)) {
-										print("token is valid");
-										outcome = Blue2Factor.SUCCESS;
-									} else {
-										print("audience violated: " + audience);
+									for (String audienceMember : audience) {
+										if (audienceMember.equals(url)) {
+											print("token is valid");
+											outcome = Blue2Factor.SUCCESS;
+										}
 									}
 								} else {
 									print("issuer violated: " + issuer);
@@ -309,14 +307,19 @@ public class Blue2Factor {
 	 * @return the claims
 	 */
 	private Claims decryptJwt(String jwsString, PublicKey publicKey) {
-		Jws<Claims> jws = null;
+//		Jws<Claims> jws = null;
 		Claims claims = null;
 		try {
 			if (publicKey != null) {
-				JwtParserBuilder parseBuilder = Jwts.parserBuilder();
-				JwtParser parser = parseBuilder.setSigningKey(publicKey).build();
-				jws = parser.parseClaimsJws(jwsString);
-				claims = jws.getBody();
+//				JwtParserBuilder parseBuilder = Jwts.parser();
+//				JwtParser parser = parseBuilder.setSigningKey(publicKey).build();
+//				jws = parser.parseClaimsJws(jwsString);
+//				claims = jws.getBody();
+				claims = Jwts.parser()
+					    .verifyWith(publicKey) // Replaces setSigningKey(String)
+					    .build()
+					    .parseSignedClaims(jwsString)
+					    .getPayload();
 			}
 		} catch (ExpiredJwtException e) {
 			print("Expired key, setting claims");
@@ -375,7 +378,8 @@ public class Blue2Factor {
 		HttpsURLConnection conn = null;
 		String result = null;
 		try {
-			URL url = new URL(urlStr);
+			URI uri = new URI(urlStr);
+			URL url = uri.toURL();
 			conn = (HttpsURLConnection) url.openConnection();
 			if (jwt != null) {
 				conn.setRequestProperty("Authorization", "Bearer " + jwt);

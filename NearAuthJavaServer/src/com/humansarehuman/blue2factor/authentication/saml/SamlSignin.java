@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import com.humansarehuman.blue2factor.authentication.api.B2fApi;
 import com.humansarehuman.blue2factor.authentication.failures.Failure;
 import com.humansarehuman.blue2factor.constants.Constants;
+import com.humansarehuman.blue2factor.constants.LogConstants;
 import com.humansarehuman.blue2factor.constants.Outcomes;
 import com.humansarehuman.blue2factor.constants.Urls;
 import com.humansarehuman.blue2factor.dataAndAccess.CompanyDataAccess;
@@ -282,7 +283,7 @@ public class SamlSignin extends B2fApi {
 				String authId = "b2f_" + GeneralUtilities.randomString();
 				String incomingRequestId = incomingAuthnRequest.getID();
 				String identityProviderName = samlIdp.getIdentityProviderName();
-				dataAccess.addLog("building new request");
+				dataAccess.addLog("building new request", LogConstants.TEMPORARILY_IMPORTANT);
 				authnRequest = saml.buildAuthnRequest(samlIdp, company, authId, true);
 				String tableId = GeneralUtilities.randomString();
 				java.sql.Timestamp now = DateTimeUtilities.getCurrentTimestamp();

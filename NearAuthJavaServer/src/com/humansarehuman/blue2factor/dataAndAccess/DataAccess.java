@@ -70,9 +70,8 @@ import com.webauthn4j.data.attestation.AttestationObject;
 import com.webauthn4j.data.attestation.authenticator.AttestedCredentialData;
 import com.webauthn4j.data.client.CollectedClientData;
 
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Encoders;
-import io.jsonwebtoken.security.Keys;
 
 public class DataAccess extends DeviceFields {
 
@@ -873,9 +872,9 @@ public class DataAccess extends DeviceFields {
 	}
 
 	public KeyDbObj createNewPrivateSshKey(ServerDbObj server) {
-		KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+		KeyPair keyPair = Jwts.SIG.RS256.keyPair().build();
 		String privateKey = Encoders.BASE64.encode(keyPair.getPrivate().getEncoded());
-		String algorithm = SignatureAlgorithm.RS256.getJcaName();
+		String algorithm = Jwts.SIG.RS256.getId();
 		expireKeysByTypeAndDeviceId(KeyType.SERVER_SSH_PRIVATE_KEY, server.getServerId());
 		KeyDbObj key = new KeyDbObj(GeneralUtilities.randomString(), server.getServerId(), null, null,
 				server.getCompanyId(), KeyType.SERVER_SSH_PRIVATE_KEY, privateKey, false, algorithm, null,
@@ -1985,7 +1984,7 @@ public class DataAccess extends DeviceFields {
 				prepStmt = conn.prepareStatement(query);
 				prepStmt.setString(1, machineId);
 				prepStmt.setBoolean(2, true);
-				rs = executeQuery(prepStmt);
+				rs = executeImportantQuery(prepStmt);
 				while (rs.next()) {
 					device = recordToDevice(rs);
 					break;
@@ -2334,9 +2333,9 @@ public class DataAccess extends DeviceFields {
 	}
 
 	public KeyDbObj createServerPrivateSshKeyForCompany(String companyId) {
-		KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+		KeyPair keyPair = Jwts.SIG.RS256.keyPair().build();
 		String privateKey = Encoders.BASE64.encode(keyPair.getPrivate().getEncoded());
-		String algorithm = SignatureAlgorithm.RS256.getJcaName();
+		String algorithm = Jwts.SIG.RS256.getId();
 		KeyDbObj key = new KeyDbObj(GeneralUtilities.randomString(), null, null, null, companyId,
 				KeyType.SERVER_SSH_PRIVATE_KEY, privateKey, false, algorithm, null,
 				DateTimeUtilities.getCurrentTimestampPlusDays(3652));
@@ -3502,6 +3501,7 @@ public class DataAccess extends DeviceFields {
 
 					prepStmt.setString(6, env.toString());
 				} catch (Exception e2) {
+					prepStmt.setString(6, "prod?");
 					// e2.printStackTrace();
 				}
 				prepStmt.executeUpdate();
@@ -4635,6 +4635,7 @@ public class DataAccess extends DeviceFields {
 			prepStmt = conn.prepareStatement(query);
 			prepStmt.setString(1, tokenId);
 			rs = executeQuery(prepStmt);
+			logQueryImportant("getToken", prepStmt);
 			if (rs.next()) {
 				token = this.recordToToken(rs);
 			}

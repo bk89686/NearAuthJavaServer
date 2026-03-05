@@ -1169,6 +1169,14 @@ body {
 	    width: 230px;
 	    margin: auto;
 	}
+	
+	#centerPanelSignin {
+		position: relative;
+		left:-31px;
+	    top: 38px;
+	    width: 230px;
+	    margin: auto;
+	}
 	#centerPanelTableWide {
         position: relative;
         top: 38px;
@@ -1565,6 +1573,15 @@ body {
 	    top: 38px;
 	    width: 347px;
 	    margin: auto;
+	    font-size:1.3em;
+	}
+	
+	#centerPanelSignin {
+		position: relative;
+	    top: 38px;
+	    width: 347px;
+	    margin: auto;
+	    left: -31px;
 	    font-size:1.3em;
 	}
 	
@@ -2093,6 +2110,16 @@ body {
 	#centerPanelTable {
 		position: relative;
 	    top: 38px;
+	    width: 90%;
+	    margin: auto;
+	    position: relative;
+        font-size:1.3em;
+	}
+	
+	#centerPanelSignin{
+		position: relative;
+	    top: 38px;
+	    left: -31px;
 	    width: 90%;
 	    margin: auto;
 	    position: relative;

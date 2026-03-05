@@ -14,6 +14,7 @@ public class CompanyDbObj {
 	private boolean active;
 	private Date createDate;
 	private String companyLoginToken;
+	@SuppressWarnings("unused")
 	private String companyCompletionUrl;
 	private String companyBaseUrl;
 	private String apiKey;
@@ -191,7 +192,7 @@ public class CompanyDbObj {
 	}
 
 	public String getCompleteCompanyLoginUrl() {
-		return companyBaseUrl + companyLoginUrl;
+		return "https://" + companyBaseUrl + companyLoginUrl;
 	}
 
 	public void setCompanyLoginUrl(String companyLoginUrl) {
@@ -270,7 +271,8 @@ public class CompanyDbObj {
 	}
 
 	public String getCompanyCompletionUrl() {
-		return companyCompletionUrl;
+		return "https://" + companyBaseUrl + "/" + companyLoginUrl;
+//		return companyCompletionUrl;
 	}
 
 	public void setCompanyCompletionUrl(String companyCompletionUrl) {

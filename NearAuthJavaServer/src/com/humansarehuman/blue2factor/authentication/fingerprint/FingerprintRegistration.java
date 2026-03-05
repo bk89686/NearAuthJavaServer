@@ -73,13 +73,13 @@ public class FingerprintRegistration extends B2fApi {
 			throws IOException {
 		boolean success = false;
 		String instanceId = frReq.getBrowserSession();
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
-		dataAccess.addLog("FingerprintRegistration", "instanceId: " + instanceId, logLevel);
+		dataAccess.addLog("instanceId: " + instanceId, logLevel);
 		GeneralUtilities generalUtilities = new GeneralUtilities();
 		FingerprintRegistrationResponse frResp = null;
 		String challenge = GeneralUtilities.randomString(20);
-		dataAccess.addLog("FingerprintRegistration", "challenge: " + challenge, logLevel);
+		dataAccess.addLog("challenge: " + challenge, logLevel);
 		try {
 			Rp rp = null;
 			User user = null;
@@ -104,10 +104,12 @@ public class FingerprintRegistration extends B2fApi {
 						rp = new Rp(origin, origin, Urls.ICON_PATH);
 						GroupDbObj gp = dataAccess.getGroupById(device.getGroupId());
 						user = new User(gp.getGroupName(), instanceId, gp.getUsername());
-						if (this.doesUrlMatchRegex(company, frReq.getReqUrl()) != null) {
+						if (this.doesUrlMatchRegex(company, frReq.getReqUrl(), dataAccess) != null) {
 							response = generalUtilities.setResponseHeader(response, frReq.getReqUrl());
 							dataAccess.addLog(device.getDeviceId(), "success", logLevel);
 							success = true;
+						} else {
+							dataAccess.addLog(device.getDeviceId(), "regex failed with url: " + frReq.getReqUrl(), logLevel);
 						}
 					}
 				} else {

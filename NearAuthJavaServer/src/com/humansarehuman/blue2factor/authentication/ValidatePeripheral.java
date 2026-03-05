@@ -181,8 +181,6 @@ public class ValidatePeripheral extends B2fApi {
 			Saml saml = new Saml();
 			String authId = GeneralUtilities.randomString();
 			AuthnRequest authnRequest = saml.buildAuthnRequest(samlIdp, company, authId, true);
-			// not needed
-			saml.authnRequestToString(authnRequest, samlIdp.isSignRequest());
 			SamlAuthnRequestDbObj samlAuthnRequest = saml.buildAndSaveAuthnRequestObj(group, samlIdp, authId, "app",
 					deviceId);
 			redirectSamlRequestToIdp(httpResponse, authnRequest, samlAuthnRequest.getOutgoingRelayState(),

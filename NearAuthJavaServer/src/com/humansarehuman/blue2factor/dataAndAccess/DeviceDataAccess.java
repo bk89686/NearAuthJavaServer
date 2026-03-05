@@ -1275,7 +1275,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			if (activeOnly) {
 				prepStmt.setBoolean(2, true);
 			}
-			logQuery(getMethodName(), prepStmt);
+			logQueryImportant(getMethodName(), prepStmt);
 			rs = executeQuery(prepStmt);
 			int i = 0;
 			while (rs.next()) {
@@ -2578,6 +2578,10 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 	public boolean isAccessAllowed(DeviceConnectionDbObj connection, DeviceDbObj device) {
 		return isAccessAllowed(connection, device, false);
 	}
+	
+	public AccessAllowedWithAccessType isAccessAllowedWithConnectionMethod(DeviceConnectionDbObj connection, DeviceDbObj device) {
+		return isAccessAllowedWithConnectionMethod(connection, device, false);
+	}
 
 	public boolean isAccessAllowed(DeviceDbObj device, String caller, boolean deactivateFingerprint) {
 		boolean success = false;
@@ -2625,6 +2629,18 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		validateWithConnectionLog(device, success, connType);
 		return success;
 	}
+	
+	public AccessAllowedWithAccessType isAccessAllowedWithConnectionMethod(DeviceDbObj device, 
+			String caller, boolean deactivateFingerprint) {
+		AccessAllowedWithAccessType accessData = isProximateWithData(device, false);
+		if (!accessData.isAccessAllowed()) {
+			accessData = didGiveAccessWithReturnType(device);
+			if (!accessData.isAccessAllowed()) {
+				accessData = isBtConnectedWithRecentTransferWithData(device);
+			}
+		}
+		return accessData;
+	}
 
 	public boolean isAccessAllowed(DeviceConnectionDbObj connection, DeviceDbObj device, boolean ignoreSleep) {
 		boolean success = false;
@@ -2636,8 +2652,8 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 						connType = ConnectionType.PROX;
 						success = true;
 					} else {
-						ConnectedAndConnectionType cct = didGiveAccess(connection, device.isCentral());
-						success = cct.isConnected();
+						AccessAllowedWithAccessType cct = didGiveAccess(connection, device.isCentral());
+						success = cct.isAccessAllowed();
 						connType = cct.getConnectionType();
 						if (!success) {
 							Boolean peripheralMobile = null;
@@ -2696,6 +2712,67 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		}
 		return success;
 	}
+	
+	public AccessAllowedWithAccessType isAccessAllowedWithConnectionMethod(DeviceConnectionDbObj connection, 
+			DeviceDbObj device, boolean ignoreSleep) {
+		AccessAllowedWithAccessType accessAllowedWithAccessType = new AccessAllowedWithAccessType(false, ConnectionType.NONE,
+				DateTimeUtilities.getCurrentTimestamp());
+		if (connection != null) {
+			try {
+				if (device.isCentral() || !device.isScreensaverOn()) {
+					accessAllowedWithAccessType = isProximateWithData(connection, false);
+					if (!accessAllowedWithAccessType.isAccessAllowed()) {
+						accessAllowedWithAccessType = didGiveAccess(connection, device.isCentral());;
+						if (!accessAllowedWithAccessType.isAccessAllowed()) {
+							Boolean peripheralMobile = null;
+							if (device.isCentral()) {
+								DeviceDbObj peripheral = this.getDeviceByDeviceId(connection.getPeripheralDeviceId());
+								if (peripheral != null) {
+									peripheralMobile = peripheral.isPeripheralMobile();
+								} else {
+									this.addLog(device.getDeviceId(),
+											"Peripheral was null for device connection Id: "
+													+ connection.getConnectionId() + " the perfId was "
+													+ connection.getPeripheralDeviceId(),
+											LogConstants.ERROR);
+								}
+							} else {
+								peripheralMobile = device.isPeripheralMobile();
+							}
+							if (peripheralMobile != null) {
+								accessAllowedWithAccessType = connectionIsWithinTimePeriodWithConnectionMethod(connection, peripheralMobile);
+							}
+						}
+					}
+
+					if (accessAllowedWithAccessType.isAccessAllowed()) {
+						if (!device.getSignedIn()) {
+							// success = false;
+							addLog(device.getDeviceId(),
+									"withConnection: device " + device.getDeviceType() + " was not signed in",
+									LogConstants.ERROR);
+						}
+						if (!ignoreSleep) {
+							accessAllowedWithAccessType.setAccessAllowed(hasPeripheralHadCommunication(connection, device));
+						}
+					}
+				}
+			} catch (Exception e) {
+				addLog(e);
+			}
+		} else {
+			addLog(device.getDeviceId(), "withConnection: connection was null", LogConstants.ERROR);
+		}
+		addLog(device.getDeviceId(), "connected: " + accessAllowedWithAccessType.isAccessAllowed() + 
+				", connType: " + accessAllowedWithAccessType.getConnectionType() + " (with device)",
+				LogConstants.TRACE);
+		if (!ignoreSleep) {
+			validateWithConnectionLog(connection, device, accessAllowedWithAccessType);
+		}
+		return accessAllowedWithAccessType;
+	}
+	
+	
 
 	public boolean isAccessAllowed(DeviceConnectionDbObj connection, boolean ignoreSleep) {
 		boolean success = false;
@@ -2709,8 +2786,8 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 						connType = ConnectionType.PROX;
 						success = true;
 					} else {
-						ConnectedAndConnectionType cct = didGiveAccess(connection, false);
-						success = cct.isConnected();
+						AccessAllowedWithAccessType cct = didGiveAccess(connection, false);
+						success = cct.isAccessAllowed();
 						connType = cct.getConnectionType();
 						if (!success) {
 							success = connectionIsWithinTimePeriod(connection, device.isPeripheralMobile());
@@ -2766,6 +2843,11 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		}
 	}
 
+	private void validateWithConnectionLog(DeviceConnectionDbObj connection, DeviceDbObj device, 
+			AccessAllowedWithAccessType accessAllowedWithAccessType) {
+		validateWithConnectionLog(connection, device, accessAllowedWithAccessType.isAccessAllowed(), 
+				accessAllowedWithAccessType.getConnectionType());
+	}
 	private void validateWithConnectionLog(DeviceConnectionDbObj connection, DeviceDbObj device, boolean connected,
 			ConnectionType connectionType) {
 		boolean added = false;
@@ -2974,6 +3056,12 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 	public boolean isAccessAllowedByAuthToken(DeviceDbObj device, String tokenId) {
 		return isAccessAllowedByToken(device, tokenId, TokenDescription.AUTHENTICATION);
 	}
+	
+	public AccessAllowedWithAccessType isAccessAllowedByAuthTokenWithConnectionMethod(DeviceDbObj device, String tokenId) {
+		return isAccessAllowedByTokenWithConnectionMethod(device, tokenId, TokenDescription.AUTHENTICATION);
+	}
+	
+	
 
 	public boolean isAccessAllowedByJwt(DeviceDbObj device, String tokenId) {
 		return isAccessAllowedByToken(device, tokenId, TokenDescription.JWT);
@@ -3108,6 +3196,31 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		addLog("accessAllowed: " + success);
 		return success;
 	}
+	
+	public AccessAllowedWithAccessType isAccessAllowedByTokenWithConnectionMethod(DeviceDbObj device, String tokenId, TokenDescription description) {
+		boolean success = false;
+		addLog("start");
+		AccessAllowedWithAccessType accessAllowedWithAccessType = new AccessAllowedWithAccessType(false, ConnectionType.NONE,
+				DateTimeUtilities.getCurrentTimestamp());
+		if (!device.isCentral()) {
+			addLog("peripheralConnection found");
+			DeviceConnectionDbObj connection = this.getConnectionByPeripheralToken(tokenId, description);
+			accessAllowedWithAccessType = isAccessAllowedWithConnectionMethod(connection, device);
+		} else {
+			addLog("peripheralConnection NOT found");
+			ArrayList<DeviceConnectionDbObj> connections = this.getConnectionsForCentralToken(tokenId, description);
+			for (DeviceConnectionDbObj devConn : connections) {
+				addLog("will check if access is allowed with device acting as central");
+				accessAllowedWithAccessType = isAccessAllowedWithConnectionMethod(devConn, device);
+				if (accessAllowedWithAccessType.isAccessAllowed()) {
+					break;
+				}
+			}
+		}
+		addLog("accessAllowed: " + success);
+		return accessAllowedWithAccessType;
+	}
+	
 
 	public SuccessAndConnection isAccessAllowedByTokenWithConnection(DeviceDbObj device, String tokenId,
 			TokenDescription description) {
@@ -3247,6 +3360,58 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		return connected;
 	}
 
+	public AccessAllowedWithAccessType isProximateWithData(DeviceConnectionDbObj connection, boolean ignoreSleep) {
+		AccessAllowedWithAccessType accessAllowedWithAccessType = new AccessAllowedWithAccessType(false, ConnectionType.NONE,
+				DateTimeUtilities.getCurrentTimestamp());
+		if (!areDevicesTurnedOffOrAsleep(connection, ignoreSleep)) {
+			if (connection.getPeripheralConnected()) {
+				String query = "SELECT * FROM B2F_CHECK WHERE CENTRAL_DEVICE_ID = ? AND "
+						+ "PERIPHERAL_DEVICE_ID = ? AND COMPLETED = ? AND OUTCOME = ? AND "
+						+ "EXPIRED = ? AND CHECK_TYPE IN (?, ?) ORDER BY COMPLETION_DATE DESC";
+				Connection conn = null;
+				PreparedStatement prepStmt = null;
+				ResultSet rs = null;
+				try {
+					conn = MySqlConn.getConnection();
+					prepStmt = conn.prepareStatement(query);
+					prepStmt.setString(1, connection.getCentralDeviceId());
+					prepStmt.setString(2, connection.getPeripheralDeviceId());
+					prepStmt.setBoolean(3, true);
+					prepStmt.setInt(4, Outcomes.SUCCESS);
+					prepStmt.setBoolean(5, false);
+					prepStmt.setString(6, CheckType.PROX.checkTypeName().toLowerCase());
+					prepStmt.setString(7, CheckType.CONNECTION_FROM_PERIPHERAL.checkTypeName().toLowerCase());
+					rs = executeQuery(prepStmt);
+					logQuery(getMethodName(), prepStmt);
+					if (rs.next()) {
+						Timestamp completionDate = rs.getTimestamp("COMPLETION_DATE");
+						if (completionDate != null) {
+							long seconds = DateTimeUtilities.timestampSecondAgo(completionDate);
+							addLog(connection.getPeripheralDeviceId(), "proximity seconds: " + seconds,
+									LogConstants.DEBUG);
+							if (seconds < 20 * 60) {
+								accessAllowedWithAccessType.setAccessAllowed(true);
+								accessAllowedWithAccessType.setConnectionType(ConnectionType.PROX);
+							}
+						}
+						addLog(connection.getCentralDeviceId(), "success: " + accessAllowedWithAccessType.isAccessAllowed());
+					} else {
+						addLog(connection.getCentralDeviceId(), "none found");
+					}
+				} catch (Exception e) {
+					this.addLog(connection.getCentralDeviceId(), e);
+				} finally {
+					MySqlConn.close(rs, prepStmt, conn);
+				}
+			}
+		} else {
+			accessAllowedWithAccessType.setReason(Constants.DEVICE_ASLEEP);
+			addLog(connection.getPeripheralDeviceId(), "one of the devices is turned off or asleep",
+					LogConstants.WARNING);
+		}
+		return accessAllowedWithAccessType;
+	}
+	
 	public AccessAllowedWithAccessType isProximateWithData(DeviceDbObj device, boolean ignoreSleep) {
 		boolean connected = this.isAccessAllowed(device);
 		Timestamp completionDate = null;
@@ -3418,6 +3583,38 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		}
 		return connected;
 	}
+	
+	public AccessAllowedWithAccessType connectionIsWithinTimePeriodWithConnectionMethod(DeviceConnectionDbObj connection, boolean mobilePeripheral) {
+		AccessAllowedWithAccessType accessAllowedWithAccessType = new AccessAllowedWithAccessType(false, ConnectionType.NONE,
+				DateTimeUtilities.getCurrentTimestamp());
+		if (connection != null && (connection.getCentralConnected() && connection.getPeripheralConnected())) {
+			Timestamp connMinimum;
+			int timeLimit;
+			if (mobilePeripheral) {
+				timeLimit = Constants.PREVIOUS_CONNECTION_LIMIT_IF_BLUETOOTH_CONNECTED_SECONDS_MOBILE_PERIPHERAL;
+			} else {
+				timeLimit = Constants.PREVIOUS_CONNECTION_LIMIT_IF_BLUETOOTH_CONNECTED_SECONDS;
+			}
+			connMinimum = DateTimeUtilities.getCurrentTimestampMinusSeconds(timeLimit);
+			if (connection.getLastSuccess() != null) {
+				if (connection.getLastSuccess().after(connMinimum)) {
+					accessAllowedWithAccessType = new AccessAllowedWithAccessType(true, ConnectionType.PROX, connection.getLastSuccess());
+				}
+			}
+		} else {
+			if (connection == null) {
+				accessAllowedWithAccessType.setReason(Constants.CONNECTION_NOT_FOUND);
+				this.addLog("connection was null", LogConstants.ERROR);
+			}
+		}
+		if (!accessAllowedWithAccessType.isAccessAllowed()) {
+			// is it possible we want to exclude centrals from this
+			accessAllowedWithAccessType = isSubscribedWithinTimePeriodWithConnectionMethod(connection, mobilePeripheral);
+		} else {
+			this.addLog("connected = true");
+		}
+		return accessAllowedWithAccessType;
+	}
 
 	private boolean isSubscribedWithinTimePeriod(DeviceConnectionDbObj connection, boolean mobilePeripheral) {
 		boolean connected = false;
@@ -3448,6 +3645,41 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			}
 		}
 		return connected;
+	}
+	
+	private AccessAllowedWithAccessType isSubscribedWithinTimePeriodWithConnectionMethod(DeviceConnectionDbObj connection, boolean mobilePeripheral) {
+		AccessAllowedWithAccessType accessAllowedWithAccessType = new AccessAllowedWithAccessType(false, ConnectionType.NONE,
+				DateTimeUtilities.getCurrentTimestamp());
+		if (connection != null && (connection.isSubscribed())) {
+			Timestamp lastSubscribed = connection.getLastSubscribed();
+			long secondsAgo = DateTimeUtilities.timestampSecondAgo(lastSubscribed);
+			if (Constants.BLUETOOTH_CONNECTION_TIME_PERIOD > secondsAgo) {
+				long lastSuccessSecondsAgo;
+				if (mobilePeripheral) {
+					lastSuccessSecondsAgo = Constants.PREVIOUS_CONNECTION_LIMIT_IF_BLUETOOTH_CONNECTED_SECONDS_MOBILE_PERIPHERAL;
+				} else {
+					lastSuccessSecondsAgo = Constants.PREVIOUS_CONNECTION_LIMIT_IF_BLUETOOTH_CONNECTED_SECONDS;
+				}
+				if (connection.getLastSuccess() != null) {
+					lastSuccessSecondsAgo = DateTimeUtilities.timestampSecondAgo(connection.getLastSuccess());
+				}
+				if (Constants.PREVIOUS_CONNECTION_LIMIT_IF_BLUETOOTH_CONNECTED_SECONDS > lastSuccessSecondsAgo) {
+					accessAllowedWithAccessType = new AccessAllowedWithAccessType(true, ConnectionType.PROX,
+							connection.getLastSuccess());
+				} else {
+					accessAllowedWithAccessType.setReason(Constants.NO_RECENT_COMMUNICATION);
+					this.addLog(connection.getPeripheralDeviceId(),
+							"subscribed but not transferred within the last 24 hours - lastSuccess: "
+									+ lastSuccessSecondsAgo + "seconds ago",
+							LogConstants.IMPORTANT);
+				}
+			} else {
+				accessAllowedWithAccessType.setReason(Constants.NO_RECENT_COMMUNICATION);
+				this.addLog(connection.getPeripheralDeviceId(), "not Bluetooth connect within the lasn 20 minutes.",
+						LogConstants.IMPORTANT);
+			}
+		}
+		return accessAllowedWithAccessType;
 	}
 
 	public AccessAllowedWithAccessType connectionIsWithinTimePeriodWithData(DeviceDbObj device,
@@ -3579,11 +3811,12 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		return new AdminCodeResponse(codes);
 	}
 
-	public ConnectedAndConnectionType didGiveAccess(DeviceConnectionDbObj connection, boolean isCentral) {
+	public AccessAllowedWithAccessType didGiveAccess(DeviceConnectionDbObj connection, boolean isCentral) {
 		boolean connected = false;
 		ConnectionType connType = null;
 		String query = "SELECT * FROM B2F_CHECK WHERE ";
 		Timestamp now = DateTimeUtilities.getCurrentTimestamp();
+		Timestamp connTime = now;
 		if (isCentral) {
 			query += "CENTRAL_DEVICE_ID = ? ";
 		} else {
@@ -3616,6 +3849,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			if (rs.next()) {
 				CheckDbObj check = this.recordToCheck(rs);
 				connType = check.getCheckType().getConnectionType();
+				connTime = check.getCompletionDate();
 				connected = true;
 			}
 		} catch (Exception e) {
@@ -3623,7 +3857,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		} finally {
 			MySqlConn.close(rs, prepStmt, conn);
 		}
-		return new ConnectedAndConnectionType(connected, connType);
+		return new AccessAllowedWithAccessType(connected, connType, connTime);
 	}
 
 	public boolean didVeryRecentlyGiveAccess(DeviceDbObj device) {

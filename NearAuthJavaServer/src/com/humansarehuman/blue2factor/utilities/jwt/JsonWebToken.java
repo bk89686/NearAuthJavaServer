@@ -6,6 +6,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.Set;
 
 import org.apache.http.util.TextUtils;
 
@@ -32,11 +33,8 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.JwtParserBuilder;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Encoders;
-import io.jsonwebtoken.security.Keys;
 
 public class JsonWebToken {
 	private String jwtTokenId;
@@ -44,7 +42,7 @@ public class JsonWebToken {
 	public void updateJwtKey() {
 		DataAccess dataAccess = new DataAccess();
 		try {
-			KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+			KeyPair keyPair = Jwts.SIG.RS256.keyPair().build();
 			String privateKey = Encoders.BASE64.encode(keyPair.getPrivate().getEncoded());
 			String publicKey = Encoders.BASE64.encode(keyPair.getPublic().getEncoded());
 			String rand = GeneralUtilities.randomString();
@@ -52,11 +50,11 @@ public class JsonWebToken {
 			Timestamp oneMonth = DateTimeUtilities.getCurrentTimestampPlusDays(31);
 			dataAccess.addLog("adding public JWT Key");
 			KeyDbObj pubKey = new KeyDbObj(rand + "b", null, null, null, null, KeyType.JWT, publicKey, true,
-					SignatureAlgorithm.RS256.getJcaName(), null, oneMonth);
+					Jwts.SIG.RS256.getId(), null, oneMonth);
 			dataAccess.addLog("publicKey: " + publicKey);
 			dataAccess.addLog("publicKey: " + keyPair.getPublic().toString());
 			KeyDbObj pvtKey = new KeyDbObj(rand + "v", null, null, null, null, KeyType.JWT, privateKey, false,
-					SignatureAlgorithm.RS256.getJcaName(), null, oneMonth);
+					Jwts.SIG.RS256.getId(), null, oneMonth);
 			dataAccess.addLog("added private JWT Key");
 			dataAccess.addKey(pubKey);
 			dataAccess.addKey(pvtKey);
@@ -65,23 +63,23 @@ public class JsonWebToken {
 		}
 	}
 
-	public String buildExpiredJwt(IdentityObjectFromServer idObj) {
-		return buildJwt(idObj, -6000); // 100 hundred minute in the past
+	public String buildExpiredJwt(IdentityObjectFromServer idObj, String audience) {
+		return buildJwt(idObj, audience, -6000); // 100 hundred minutes in the past
 	}
 
-	public String buildJwt(IdentityObjectFromServer idObj) {
-		return buildJwt(idObj, 60); // one minutes
+	public String buildJwt(IdentityObjectFromServer idObj, String audience) {
+		return buildJwt(idObj, audience, 60); // one minutes
 	}
 
-	public String buildJwtForServer(IdentityObjectFromServer idObj) {
-		return buildJwt(idObj, 30);
+	public String buildJwtForServer(IdentityObjectFromServer idObj, String audience) {
+		return buildJwt(idObj, audience, 30);
 	}
 
-	public String buildJwtForJs(IdentityObjectFromServer idObj) {
-		return buildJwt(idObj, 30); // 30 seconds
+	public String buildJwtForJs(IdentityObjectFromServer idObj, String source) {
+		return buildJwt(idObj, source, 30); // 30 seconds
 	}
 
-	public String buildJwt(IdentityObjectFromServer idObj, int secondsToExpire) {
+	public String buildJwt(IdentityObjectFromServer idObj, String url, int secondsToExpire) {
 		Date expire;
 		if (secondsToExpire < 0) {
 			expire = DateTimeUtilities.nowMinusSeconds(secondsToExpire);
@@ -89,10 +87,10 @@ public class JsonWebToken {
 			expire = DateTimeUtilities.nowPlusSeconds(480); // eight minutes
 		}
 		new DataAccess().addLog("building new JWT with expire date: " + expire);
-		return buildJwt(idObj, expire);
+		return buildJwt(idObj, url, expire);
 	}
 
-	public String buildJwt(IdentityObjectFromServer idObj, Date expire) {
+	public String buildJwt(IdentityObjectFromServer idObj, String audience, Date expire) {
 		String jwt = null;
 		DataAccess dataAccess = new DataAccess();
 		int logLevel = LogConstants.TRACE;
@@ -123,16 +121,16 @@ public class JsonWebToken {
 				/* @formatter:off */
 				if (token != null) {
 					jwt = Jwts.builder()
-                                .setSubject("blue2factor")
-                                .setHeaderParam("alg", "RSA256")
-                                .setHeaderParam("x5u", url)
-                                .setExpiration(expire)
-                                .setNotBefore(new Date())
-                                .setAudience(idObj.getCompany().getCompleteCompanyLoginUrl())
-                                .setIssuedAt(new Date())
-                                .setIssuer(issuer)
-                                .setId(token.getTokenId())
-//                                .claim("scope", "")
+                                .subject("blue2factor")
+                                .expiration(expire)
+                                .notBefore(new Date())
+                                .issuedAt(new Date())
+                                .id(token.getTokenId())
+                                .issuer(issuer)
+                                .audience().add(audience).and()
+                                .header()
+                                	.add("alg", "RSA256")
+                                	.add("x5u", url).and()
                                 .signWith(privateKey)
                                 .compact();
 				}
@@ -150,11 +148,16 @@ public class JsonWebToken {
 		Claims claims = null;
 		try {
 			PublicKey publicKey = getJwtPublicKey(dataAccess);
-			JwtParserBuilder parseBuilder = Jwts.parserBuilder();
-			JwtParser parser = parseBuilder.setSigningKey(publicKey).build();
-			jws = parser.parseClaimsJws(jwsString);
-			dataAccess.addLog("jwt parsed");
-			claims = jws.getBody();
+			JwtParser parser = Jwts.parser()
+				    .verifyWith(publicKey) 
+				    .build();
+			jws = parser.parseSignedClaims(jwsString);
+			claims = jws.getPayload();
+//			JwtParserBuilder parseBuilder = Jwts.parser();
+//			JwtParser parser = parseBuilder.setSigningKey(publicKey).build();
+//			jws = parser.parseClaimsJws(jwsString);
+//			dataAccess.addLog("jwt parsed");
+//			claims = jws.getBody();
 		} catch (ExpiredJwtException e) {
 			dataAccess.addLog("Expired key, setting claims");
 			claims = e.getClaims();
@@ -164,8 +167,13 @@ public class JsonWebToken {
 				KeyDbObj oldKey = dataAccess.getJustExpiredJwsPublicKey();
 				if (oldKey != null) {
 					PublicKey publicKey = getPublicKeyFromKeyObj(oldKey);
-					jws = Jwts.parserBuilder().setSigningKey(publicKey).build().parseClaimsJws(jwsString);
-					claims = jws.getBody();
+					JwtParser parser = Jwts.parser()
+						    .verifyWith(publicKey) 
+						    .build();
+					jws = parser.parseSignedClaims(jwsString);
+					claims = jws.getPayload();
+//					jws = Jwts.parser().setSigningKey(publicKey).build().parseClaimsJws(jwsString);
+//					claims = jws.getBody();
 				}
 			} catch (Exception e) {
 				dataAccess.addLog("error decrypting old key", e);
@@ -247,7 +255,7 @@ public class JsonWebToken {
 			Date exp = claims.getExpiration();
 			Date notBefore = claims.getNotBefore();
 			String issuer = claims.getIssuer();
-			String audience = claims.getAudience();
+			Set<String> audience = claims.getAudience();
 			jwtTokenId = claims.getId();
 			dataAccess.addLog("tokenId: " + jwtTokenId, logLevel);
 			Date now = new Date();
@@ -259,11 +267,11 @@ public class JsonWebToken {
 						if (company != null) {
 							if (issuer.equals(
 									Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", company.getApiKey()))) {
-								if (audience.equals(company.getCompleteCompanyLoginUrl())) {
-									validated = true;
-									dataAccess.addLog("all claims were validated", logLevel);
-								} else {
-									dataAccess.addLog("audience violated: " + audience, LogConstants.WARNING);
+								for (String audienceMember : audience) {
+									if (audienceMember.equals(company.getCompleteCompanyLoginUrl())) {
+										validated = true;
+										dataAccess.addLog("all claims were validated", logLevel);
+									}
 								}
 							} else {
 								dataAccess.addLog(

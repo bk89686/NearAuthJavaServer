@@ -1053,9 +1053,9 @@ public class Encryption {
 			PublicKey pk = stringToPublicKey(keyText, osClass);
 			if (pk != null) {
 				encPair = this.createEncryptedInstanceIdWithPublicKey(pk, firstLetter, osClass);
-				dataAccess.addLog("encrypted: " + encPair[0]);
-				dataAccess.addLog("to: " + encPair[1]);
-				dataAccess.addLog("with: " + new Encryption().publicKeyToString(pk));
+				dataAccess.addLog("encrypted: " + encPair[0], LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog("to: " + encPair[1], LogConstants.TEMPORARILY_IMPORTANT);
+//				dataAccess.addLog("with: " + new Encryption().publicKeyToString(pk), LogConstants.TEMPORARILY_IMPORTANT);
 			} else {
 				dataAccess.addLog("the text '" + keyText + "' is not a valid key", LogConstants.ERROR);
 			}
@@ -1146,6 +1146,8 @@ public class Encryption {
 			encPair[0] = firstLetter + GeneralUtilities.randomString(19);
 			encPair[1] = new String(encrypt(encPair[0], pk));
 			dataAccess.addLog("encrypted: " + encPair[0]);
+			dataAccess.addLog("'test' encrypted = '" + new String(encrypt("test", pk)) + "'", LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("using public key: " + publicKeyToString(pk), LogConstants.TEMPORARILY_IMPORTANT);
 		} catch (Exception e) {
 			dataAccess.addLog(e);
 		}
@@ -1159,9 +1161,10 @@ public class Encryption {
 		if (key != null) {
 			String keyText = key.getKeyText();
 			if (keyText != null) {
-				dataAccess.addLog(device.getDeviceId(),
-						"deviceType: " + device.getOperatingSystem() + " - keyText: " + keyText);
-				dataAccess.addLog("for device type " + device.getDeviceType());
+				dataAccess.addLog(device.getDeviceId(), "OS: " + device.getOperatingSystem(), 
+						LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog("for device type " + device.getDeviceType(), LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog("using key " + keyText, LogConstants.TEMPORARILY_IMPORTANT);
 				enc = this.createEncryptedInstanceIdWithKeyText(keyText, device.getOperatingSystem(), firstLetter);
 			} else {
 				dataAccess.addLog("keyText was null for " + device.getDeviceId(), LogConstants.ERROR);

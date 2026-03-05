@@ -109,7 +109,7 @@ public class AddCompany extends BaseController {
 			}
 		} catch (Exception e) {
 			dataAccess.addLog(e);
-			reason = "error: " + e.getMessage();
+			reason = "addCompanyProcessPost error: " + e.getMessage();
 		}
 		ApiResponseWithToken resp = new ApiResponseWithToken(outcome, reason, token);
 		return resp;

@@ -36,7 +36,7 @@ public class GetClientEntityId extends SamlAndLdapResponse {
 		if (company != null) {
 			Encryption encryption = new Encryption();
 			if (encryption.verifyWebServerSignature(company, plainText, signature)) {
-				entityId = doesUrlMatchRegex(company, siteUrl);
+				entityId = doesUrlMatchRegex(company, siteUrl, dataAccess);
 				if (entityId == null) {
 					entityId = "regEx comparison failed";
 				} else {

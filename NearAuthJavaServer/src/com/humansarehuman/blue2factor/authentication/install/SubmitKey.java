@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.humansarehuman.blue2factor.authentication.BaseController;
 import com.humansarehuman.blue2factor.communication.PushNotifications;
+import com.humansarehuman.blue2factor.constants.Constants;
 import com.humansarehuman.blue2factor.constants.LogConstants;
 import com.humansarehuman.blue2factor.constants.Outcomes;
 import com.humansarehuman.blue2factor.constants.Urls;
@@ -39,20 +40,19 @@ public class SubmitKey extends BaseController {
 		int outcome = Outcomes.FAILURE;
 		String reason = "";
 		String token = "";
-//		String key = getKey(request);
-//		String iv = getInitVector(request);
 		String devId = this.getRequestValue(request, "nsauhnsuha");
 		boolean foreground = this.getRequestValueBoolean(request, "fg", false);
 		boolean sshKey = this.getRequestValueBoolean(request, "cli", false);
 		boolean resend = this.getRequestValueBoolean(request, "resend", false);
+		boolean postNearAuth = this.getRequestValueBoolean(request, "postNearAuth", false);
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
-		dataAccess.addLog(devId, "deviceId: " + devId + ", foreground: " + foreground + ", sshKey: " + sshKey,
-				LogConstants.IMPORTANT);
+		dataAccess.addLog(devId, "deviceId: " + devId + ", foreground: " + foreground + ", sshKey: " + 
+				sshKey + ", postNearAuth: " +postNearAuth, LogConstants.IMPORTANT);
 		DeviceDbObj device = dataAccess.getDeviceByDeviceId(devId);
 		try {
-			if (device != null) {
+			if (device != null && postNearAuth) {
 				String publicKey = this.getRequestValue(request, "eausnht");
-				dataAccess.addLog(devId, "device found for Key: " + publicKey, LogConstants.TRACE);
+				dataAccess.addLog(devId, "device found for updating key to: " + publicKey, LogConstants.TRACE);
 				if (!TextUtils.isBlank(publicKey)) {
 					if (sshKey) {
 						String outgoingKey = addSshPublicKeyAndGetPublicKey(device, publicKey, dataAccess);
@@ -84,10 +84,14 @@ public class SubmitKey extends BaseController {
 						outcome = Outcomes.SUCCESS;
 					}
 				} else {
-					reason = "public key was blank";
+					if (!postNearAuth) {
+						reason = "public key was blank";
+					} else {
+						reason = Constants.DEV_NOT_FOUND;
+					}
 				}
 			} else {
-				reason = "device was null";
+				reason = "outdated version";
 			}
 		} catch (Exception e) {
 			reason = e.getLocalizedMessage();

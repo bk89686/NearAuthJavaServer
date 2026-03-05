@@ -721,6 +721,8 @@ public class CompanyDataAccess extends GroupDataAccess {
 				this.addLog("does " + referrer.toLowerCase() + " match " + url.getUrlRegex() + "? " + matches);
 				if (matches) {
 					break;
+				} else {
+					this.addLog("the string: " + referrer.toLowerCase() + "does not match the regex " + url.getUrlRegex(), LogConstants.IMPORTANT);
 				}
 			}
 		}

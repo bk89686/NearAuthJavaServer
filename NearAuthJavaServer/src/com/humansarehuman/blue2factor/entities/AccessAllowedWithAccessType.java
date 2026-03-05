@@ -6,14 +6,28 @@ import com.humansarehuman.blue2factor.entities.enums.ConnectionType;
 
 public class AccessAllowedWithAccessType {
 	boolean accessAllowed;
-	ConnectionType checkType;
+	ConnectionType connectionType;
 	Timestamp checkTime;
+	String token;
+	String reason;
 
-	public AccessAllowedWithAccessType(boolean accessAllowed, ConnectionType checkType, Timestamp checkTime) {
+	public AccessAllowedWithAccessType(boolean accessAllowed, ConnectionType connectionType, Timestamp checkTime) {
 		super();
 		this.accessAllowed = accessAllowed;
-		this.checkType = checkType;
+		this.connectionType = connectionType;
 		this.checkTime = checkTime;
+		this.token = "";
+		this.reason = "";
+	}
+	
+	public AccessAllowedWithAccessType(boolean accessAllowed, ConnectionType connectionType, Timestamp checkTime, String token,
+			String reason) {
+		super();
+		this.accessAllowed = accessAllowed;
+		this.connectionType = connectionType;
+		this.checkTime = checkTime;
+		this.token = token;
+		this.reason = reason;
 	}
 
 	public Timestamp getCheckTime() {
@@ -33,11 +47,37 @@ public class AccessAllowedWithAccessType {
 	}
 
 	public ConnectionType getConnectionType() {
-		return checkType;
+		return connectionType;
 	}
 
-	public void setConnectionType(ConnectionType checkType) {
-		this.checkType = checkType;
+	public void setConnectionType(ConnectionType connectionType) {
+		this.connectionType = connectionType;
 	}
 
+	public ConnectionType getCheckType() {
+		return connectionType;
+	}
+
+	public void setCheckType(ConnectionType checkType) {
+		this.connectionType = checkType;
+	}
+
+	public String getToken() {
+		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
+	}
+
+	public String getReason() {
+		return reason;
+	}
+
+	public void setReason(String reason) {
+		this.reason = reason;
+	}
+	
+	
+	
 }

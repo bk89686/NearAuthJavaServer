@@ -1,4 +1,3 @@
-
 <html lang="en">
 <head>
     <%@ include file="pages/header.jsp" %>

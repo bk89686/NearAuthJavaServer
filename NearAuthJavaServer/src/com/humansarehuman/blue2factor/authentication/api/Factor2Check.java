@@ -72,6 +72,7 @@ public class Factor2Check extends B2fApi {
 	public @ResponseBody ApiResponseWithToken browserCheckPost(@RequestBody JsRequest jsRequest,
 			HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) {
 		ApiResponseWithToken response;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		String encryptedSession = jsRequest.getEncryptedSession();
 		String token = jsRequest.getToken();
 		String requestType = jsRequest.getReqType();
@@ -82,12 +83,12 @@ public class Factor2Check extends B2fApi {
 		boolean fromBrowser = jsRequest.isFromBrowser();
 		GeneralUtilities generalUtilities = new GeneralUtilities();
 		DeviceDataAccess dataAccess = new DeviceDataAccess();
-		dataAccess.addLog("baseUrl: " + reqUrl);
-		dataAccess.addLog("requestType: " + requestType);
-		dataAccess.addLog("browserToken: " + token);
-		dataAccess.addLog("browserSession: " + encryptedSession);
-		dataAccess.addLog("deviceId: " + deviceId);
-		dataAccess.addLog("companyId: " + companyId);
+		dataAccess.addLog("baseUrl: " + reqUrl, logLevel);
+		dataAccess.addLog("requestType: " + requestType, logLevel);
+		dataAccess.addLog("browserToken: " + token, logLevel);
+		dataAccess.addLog("browserSession: " + encryptedSession, logLevel);
+		dataAccess.addLog("deviceId: " + deviceId, logLevel);
+		dataAccess.addLog("companyId: " + companyId, logLevel);
 		Encryption encryption = new Encryption();
 		String session;
 		try {
@@ -324,7 +325,8 @@ public class Factor2Check extends B2fApi {
 		String tokenStr = "";
 		String jwt = "";
 		SamlDataAccess dataAccess = new SamlDataAccess();
-		dataAccess.addLog("called with code: " + accessCode);
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		dataAccess.addLog("called with code: " + accessCode, logLevel);
 		try {
 			AccessCodeDbObj access = dataAccess.getAccessCodeFromAccessString(accessCode);
 			if (access != null) {
@@ -335,15 +337,15 @@ public class Factor2Check extends B2fApi {
 					if (device != null) {
 						CompanyDbObj company = dataAccess.getCompanyByDevId(device.getDeviceId());
 						baseUrl = company.getCompanyBaseUrl();
-						dataAccess.addLog("setup is working: login: " + url);
+						dataAccess.addLog("setup is working: login: " + url, logLevel);
 						dataAccess.updateAuthTokenWithBrowser(device.getDeviceId(), access.getBrowserId());
 						BrowserDbObj browser = dataAccess.getBrowserByAccessCode(access);
-						dataAccess.addLog("retrieved browser: " + (browser != null));
+						dataAccess.addLog("retrieved browser: " + (browser != null), logLevel);
 						TokenDbObj browserSession;
 						jwt = new JsonWebToken()
-								.buildExpiredJwt(new IdentityObjectFromServer(company, device, browser, true));
+								.buildExpiredJwt(new IdentityObjectFromServer(company, device, browser, true), url);
 						TokenDbObj browserToken;
-						dataAccess.addLog("jwt: " + jwt);
+						dataAccess.addLog("jwt: " + jwt, logLevel);
 						browserToken = dataAccess.addToken(device, browser.getBrowserId(),
 								TokenDescription.BROWSER_TOKEN, url);
 						browserSession = dataAccess.addTokenWithId(device, browser.getBrowserId(), browserSessionStr,
@@ -370,14 +372,14 @@ public class Factor2Check extends B2fApi {
 						reason = browserSession.getTokenId();
 						tokenStr = browserToken.getTokenId();
 					} else {
-						dataAccess.addLog("device was null: " + access.getDeviceId());
+						dataAccess.addLog("device was null: " + access.getDeviceId(), LogConstants.WARNING);
 					}
 				} else {
 					dataAccess.addLog("access code was too old: " + seconds + " seconds", LogConstants.WARNING);
 					reason = "access code was too old";
 				}
 			} else {
-				dataAccess.addLog("access code not found");
+				dataAccess.addLog("access code not found", LogConstants.WARNING);
 			}
 		} catch (Exception e) {
 			dataAccess.addLog(e);
@@ -408,7 +410,6 @@ public class Factor2Check extends B2fApi {
 						TokenDbObj browserIdToken = dataAccess.addToken(device, newBrowserTokenId,
 								TokenDescription.BROWSER_SESSION, url);
 						reason = browserIdToken.getTokenId();
-						baseUrl = company.getCompleteCompanyLoginUrl();
 						baseUrl = company.getCompanyBaseUrl();
 						dataAccess.addLog("setup is working: login: " + baseUrl);
 						tokenStr = browserToken.getTokenId();
@@ -536,7 +537,7 @@ public class Factor2Check extends B2fApi {
 		if (!wrongCompany) {
 			dataAccess.addLog("correct company");
 			token = encryption.encryptBrowserData(idObj.getBrowser(), newSession, url);
-			reason = new JsonWebToken().buildJwtForJs(idObj);
+			reason = new JsonWebToken().buildJwtForJs(idObj, url);
 			outcome = Outcomes.SUCCESS;
 			dataAccess.addLog("successful outcome");
 		} else {
@@ -577,7 +578,7 @@ public class Factor2Check extends B2fApi {
 									} else {
 										dataAccess.addLog("access is not allowed");
 										reason = Constants.NOT_PERMITTED;
-										token = new JsonWebToken().buildExpiredJwt(idObj);
+										token = new JsonWebToken().buildExpiredJwt(idObj, url);
 									}
 								} else {
 									reason = Constants.BROWSER_EXPIRED;

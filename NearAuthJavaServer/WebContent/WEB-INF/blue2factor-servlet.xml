@@ -22,8 +22,8 @@
 	<mvc:resources mapping="/imgFiles/**" location="/resources/imgFiles/" cache-period="2592000"/>
 	<mvc:resources mapping="/manifest/**" location="/resources/manifest/" />
 	<mvc:resources mapping="/favicon.ico" location="/resources/imgFiles/favicon.ico" />
-	<!-- <mvc:resources mapping="/well-known/**" location="/resources/well-known/" />
-	<mvc:resources mapping="/.well-known/**" location="/resources/well-known/" /> -->
+	<!-- <mvc:resources mapping="/well-known/**" location="/resources/well-known/" />-->
+	<mvc:resources mapping="/.well-known/**" location="/resources/well-known/" />
 	<mvc:resources mapping="/not-well-known/assetLinks.json" location="/resources/well-known/assetLinks.json" />
 	
 	<mvc:annotation-driven /> 

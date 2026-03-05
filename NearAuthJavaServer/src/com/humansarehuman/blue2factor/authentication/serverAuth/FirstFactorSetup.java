@@ -85,18 +85,17 @@ public class FirstFactorSetup extends B2fApi {
 	public void handleInitialSamlAuth(HttpServletRequest request, HttpServletResponse httpResponse,
 			CompanyDbObj company, AccessCodeDbObj accessCode, String sender, String incomingRequestId)
 			throws Exception {
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		SamlDataAccess dataAccess = new SamlDataAccess();
 		String authId = GeneralUtilities.randomString();
 		Saml saml = new Saml();
 		dataAccess.addLog("getting saml idp", logLevel);
 		SamlIdentityProviderDbObj samlIdp = dataAccess.getSamlIdpFromCompanyId(company.getCompanyId());
-		dataAccess.addLog("getting authnRequest", logLevel);
+		
 		AuthnRequest authnRequest = saml.buildAuthnRequest(samlIdp, company, authId, true);
-		// not needed
-		saml.authnRequestToString(authnRequest, samlIdp.isSignRequest());
 		String relayState = GeneralUtilities.randomString();
 		String referrer = new Failure().getReferrer(request, company, dataAccess);
+		dataAccess.addLog("referrer (1): " + referrer + ", sender: " + sender, logLevel);
 		SamlAuthnRequestDbObj samlAuthn = saml.buildAndSaveAuthnRequestObj(company, accessCode, samlIdp, authId,
 				relayState, referrer, incomingRequestId);
 		dataAccess.addLog("redirecting to IDP", logLevel);
@@ -114,10 +113,9 @@ public class FirstFactorSetup extends B2fApi {
 			Saml saml = new Saml();
 			SamlIdentityProviderDbObj samlIdp = dataAccess.getSamlIdpFromCompanyId(company.getCompanyId());
 			AuthnRequest authnRequest = saml.buildAuthnRequest(samlIdp, company, authId, true);
-			// not needed
-			saml.authnRequestToString(authnRequest, samlIdp.isSignRequest());
 			String relayState = GeneralUtilities.randomString();
 			String referrer = new Failure().getReferrer(request, company, dataAccess);
+			dataAccess.addLog("referrer (2): " + referrer + ", sender: " + sender, LogConstants.TEMPORARILY_IMPORTANT);
 			SamlAuthnRequestDbObj samlAuthn = saml.buildAndSaveAuthnRequestObj(company, accessCode, samlIdp, authId,
 					relayState, referrer, incomingRequestId);
 			redirectSamlRequestToIdp(httpResponse, authnRequest, samlAuthn.getOutgoingRelayState(),
@@ -141,10 +139,9 @@ public class FirstFactorSetup extends B2fApi {
 			Saml saml = new Saml();
 			SamlIdentityProviderDbObj samlIdp = dataAccess.getSamlIdpFromCompanyId(company.getCompanyId());
 			AuthnRequest authnRequest = saml.buildAuthnRequest(samlIdp, company, authId, true);
-			// not needed
-			saml.authnRequestToString(authnRequest, samlIdp.isSignRequest());
 			String relayState = GeneralUtilities.randomString();
 			String referrer = new Failure().getReferrer(request, company, dataAccess);
+			dataAccess.addLog("referrer: " + referrer + ", sender: " + sender);
 			SamlAuthnRequestDbObj samlAuthn = saml.buildAndSaveAuthnRequestObj(company, accessCode, samlIdp, authId,
 					relayState, referrer, incomingRequestId);
 			redirectSamlRequestToIdp(httpResponse, authnRequest, samlAuthn.getOutgoingRelayState(),

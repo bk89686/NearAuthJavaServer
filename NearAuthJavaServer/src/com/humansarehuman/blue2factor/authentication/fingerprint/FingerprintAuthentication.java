@@ -119,7 +119,7 @@ public class FingerprintAuthentication extends B2fApi {
 					dataAccess.addLog("authenticateFingerprint", "deviceFound");
 					CompanyDbObj company = dataAccess.getCompanyByDevId(device.getDeviceId());
 					if (company != null) {
-						if (doesUrlMatchRegex(company, frReq.getReqUrl()) != "") {
+						if (doesUrlMatchRegex(company, frReq.getReqUrl(), dataAccess) != "") {
 							response = generalUtilities.setResponseHeader(response, frReq.getReqUrl());
 							dataAccess.addLog("authenticateFingerprint", "success");
 							success = true;

@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.MediaType;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -43,7 +44,7 @@ public class GetDeviceData extends B2fApi {
 
 	@RequestMapping(method = { RequestMethod.GET, RequestMethod.POST }, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getDeviceData(HttpServletRequest request, HttpServletResponse response, ModelMap model) {
-
+		dataAccess.addLog("getDeviceData entry", LogConstants.TEMPORARILY_IMPORTANT);
 		int outcome = Outcomes.FAILURE;
 		String reason = "";
 		String redirect = "";
