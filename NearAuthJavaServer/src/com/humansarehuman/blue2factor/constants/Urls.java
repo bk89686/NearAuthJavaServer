@@ -26,6 +26,7 @@ public class Urls {
 	public final static String CHECK_FOR_RESYNC_COMPLETION = "/isResyncComplete";
 	public final static String CLIENT_SETUP = "/b2f-client-setup";
 	public final static String COMPLETE_RESYNC_ON_CENTRAL = "/nashsnechmnstbm";
+	public final static String CONFIRM_TOKEN = "/confirmToken";
 	public final static String CONNECTION_CHECK = "/huasckbstuoeiaeuhtbneug";
 	public final static String CONNECTION_CHECK_BY_UUID = "/tsaneuhnthsmbns";
 	public final static String SSH_PRECHECK = "/snaehubtnshbaueae";
@@ -117,8 +118,9 @@ public class Urls {
 	public final static String VALIDATE_TEXT = "/snehuabbbb332";
 	public final static String VALIDATE_TEXT_URL = "/snehua747b332";
 	public final static String FACTOR_2_CHECK = "/b2fBrowser";
-	public final static String SECOND_FACTOR_VALIDATION = "/b2f-f2";
+//	public final static String SECOND_FACTOR_VALIDATION = "/b2f-f2";
 	public final static String VALIDATE_USER = "/nabccgs0";
+	public final static String VERIFY_ACCESS = "/verifyAccess";
 	public final static String USER_API_ENDPOINT = "/b2fUserApi";
 	public final static String COMPANY = "/company";
 	public final static String COMPANY_SIGNOUT = "/signout";

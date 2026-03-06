@@ -75,11 +75,11 @@ public class JsonWebToken {
 		return buildJwt(idObj, audience, 30);
 	}
 
-	public String buildJwtForJs(IdentityObjectFromServer idObj, String source) {
-		return buildJwt(idObj, source, 30); // 30 seconds
+	public String buildJwtForJs(IdentityObjectFromServer idObj, String audience) {
+		return buildJwt(idObj, audience, 30); // 30 seconds
 	}
 
-	public String buildJwt(IdentityObjectFromServer idObj, String url, int secondsToExpire) {
+	public String buildJwt(IdentityObjectFromServer idObj, String audience, int secondsToExpire) {
 		Date expire;
 		if (secondsToExpire < 0) {
 			expire = DateTimeUtilities.nowMinusSeconds(secondsToExpire);
@@ -87,13 +87,13 @@ public class JsonWebToken {
 			expire = DateTimeUtilities.nowPlusSeconds(480); // eight minutes
 		}
 		new DataAccess().addLog("building new JWT with expire date: " + expire);
-		return buildJwt(idObj, url, expire);
+		return buildJwt(idObj, audience, expire);
 	}
 
 	public String buildJwt(IdentityObjectFromServer idObj, String audience, Date expire) {
 		String jwt = null;
 		DataAccess dataAccess = new DataAccess();
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		try {
 			DeviceDbObj device = idObj.getDevice();
 			CompanyDbObj company = idObj.getCompany();
@@ -117,7 +117,7 @@ public class JsonWebToken {
 				dataAccess.addLog(device.getDeviceId(), "login url: " + idObj.getCompany().getCompleteCompanyLoginUrl(),
 						logLevel);
 				dataAccess.addLog(device.getDeviceId(), "expiration: " + expire, logLevel);
-				dataAccess.addLog(device.getDeviceId(), "privateKey: " + privateKey.toString(), logLevel);
+				dataAccess.addLog(device.getDeviceId(), "audience: " + audience, logLevel);
 				/* @formatter:off */
 				if (token != null) {
 					jwt = Jwts.builder()

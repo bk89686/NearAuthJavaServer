@@ -3529,7 +3529,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 
 	public AccessAllowedWithAccessType isBtConnectedWithRecentTransferWithData(DeviceDbObj device) {
 		boolean connected = false;
-		ConnectionType connectionType = null;
+		ConnectionType connectionType = ConnectionType.NONE;
 		Timestamp completionDate = null;
 		AccessAllowedWithAccessType accessAllowedWithAccessType = new AccessAllowedWithAccessType(connected,
 				connectionType, completionDate);
@@ -3686,7 +3686,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			DeviceConnectionDbObj connection, boolean mobilePeripheral) {
 		boolean connected = false;
 		Timestamp lastConnection = null;
-		ConnectionType connectionType = null;
+		ConnectionType connectionType = ConnectionType.NONE;
 
 		if (connection != null && (connection.getCentralConnected() && connection.getPeripheralConnected())) {
 			int timeLimit;
@@ -3742,7 +3742,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 	private AccessAllowedWithAccessType isSubscribedWithinTimePeriodWithData(DeviceConnectionDbObj connection,
 			boolean mobilePeripheral) {
 		boolean connected = false;
-		ConnectionType connectionType = null;
+		ConnectionType connectionType = ConnectionType.NONE;
 		Timestamp lastConnection = null;
 		if (connection != null && (connection.isSubscribed())) {
 			Timestamp lastSubscribed = connection.getLastSubscribed();
@@ -3813,7 +3813,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 
 	public AccessAllowedWithAccessType didGiveAccess(DeviceConnectionDbObj connection, boolean isCentral) {
 		boolean connected = false;
-		ConnectionType connType = null;
+		ConnectionType connType = ConnectionType.NONE;
 		String query = "SELECT * FROM B2F_CHECK WHERE ";
 		Timestamp now = DateTimeUtilities.getCurrentTimestamp();
 		Timestamp connTime = now;
@@ -4042,7 +4042,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 
 	public AccessAllowedWithAccessType didGiveAccessWithReturnType(DeviceDbObj device) {
 		boolean connected = false;
-		ConnectionType connectionType = null;
+		ConnectionType connectionType = ConnectionType.NONE;
 		Timestamp completionDate = null;
 		if (!device.isTurnedOff() && !device.isScreensaverOn()) {
 			Timestamp now = DateTimeUtilities.getCurrentTimestamp();

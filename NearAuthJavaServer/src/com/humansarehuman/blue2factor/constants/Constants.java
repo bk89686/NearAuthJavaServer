@@ -51,6 +51,7 @@ public class Constants {
 
 	// api responses
 	public final static String TOKEN_NOT_FOUND = "token not found";
+	public final static String SESSION_NOT_FOUND = "session not found";
 	public final static String TOKEN_EXPIRED = "token expired";
 	public final static String INVALID_AUTH_TOKEN = "invalidAuthToken";
 	public final static String INVALID_JWT = "invalidJwt";

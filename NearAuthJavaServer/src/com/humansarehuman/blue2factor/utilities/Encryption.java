@@ -1146,8 +1146,7 @@ public class Encryption {
 			encPair[0] = firstLetter + GeneralUtilities.randomString(19);
 			encPair[1] = new String(encrypt(encPair[0], pk));
 			dataAccess.addLog("encrypted: " + encPair[0]);
-			dataAccess.addLog("'test' encrypted = '" + new String(encrypt("test", pk)) + "'", LogConstants.TEMPORARILY_IMPORTANT);
-			dataAccess.addLog("using public key: " + publicKeyToString(pk), LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("using public key: " + publicKeyToString(pk));
 		} catch (Exception e) {
 			dataAccess.addLog(e);
 		}

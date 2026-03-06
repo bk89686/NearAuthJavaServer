@@ -37,10 +37,6 @@ import com.humansarehuman.blue2factor.utilities.jwt.JsonWebToken;
  * This is when we have a token on the server - either held in a cookie or in
  * storage, and we want to make sure the token is valid. .
  * 
- * I'm still not sure if this will be for a JWT or a session variable or both.
- * UPDATE: this is where we will come on every check and assign a jwt that last
- * 20 minutes
- * 
  * @author cjm10
  *
  */

@@ -1,6 +1,8 @@
 package com.humansarehuman.blue2factor.authentication.api;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.sql.Timestamp;
 
 import org.apache.http.util.TextUtils;
@@ -32,10 +34,12 @@ import com.humansarehuman.blue2factor.dataAndAccess.CompanyDataAccess;
 import com.humansarehuman.blue2factor.dataAndAccess.DataAccess;
 import com.humansarehuman.blue2factor.dataAndAccess.DeviceDataAccess;
 import com.humansarehuman.blue2factor.dataAndAccess.SamlDataAccess;
+import com.humansarehuman.blue2factor.entities.AccessAllowedWithAccessType;
 import com.humansarehuman.blue2factor.entities.ConnectedAndConnectionType;
 import com.humansarehuman.blue2factor.entities.IdentityObjectFromServer;
 import com.humansarehuman.blue2factor.entities.RequestAndResponse;
 import com.humansarehuman.blue2factor.entities.UrlAndModel;
+import com.humansarehuman.blue2factor.entities.enums.ConnectionType;
 import com.humansarehuman.blue2factor.entities.enums.TokenDescription;
 import com.humansarehuman.blue2factor.entities.enums.UserType;
 import com.humansarehuman.blue2factor.entities.jsonConversion.apiResponse.ApiResponse;
@@ -51,6 +55,7 @@ import com.humansarehuman.blue2factor.entities.tables.SamlIdentityProviderDbObj;
 import com.humansarehuman.blue2factor.entities.tables.SamlServiceProviderDbObj;
 import com.humansarehuman.blue2factor.entities.tables.TokenDbObj;
 import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
+import com.humansarehuman.blue2factor.utilities.Encryption;
 import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 import com.humansarehuman.blue2factor.utilities.jwt.JsonWebToken;
 import com.humansarehuman.blue2factor.utilities.saml.Saml;
@@ -60,6 +65,258 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 public class B2fApi extends BaseController {
+	
+	protected ApiResponseWithToken expireInstance(String browserId, String url) {
+		int outcome = Outcomes.FAILURE;
+		String reason = "";
+		if (browserId != null) {
+			CompanyDataAccess dataAccess = new CompanyDataAccess();
+			dataAccess.addLog("called on " + browserId);
+			TokenDbObj token = dataAccess.getToken(browserId);
+			if (token != null) {
+				CompanyDbObj company = dataAccess.getCompanyByDevId(token.getDeviceId());
+				if (company != null) {
+					baseUrl = company.getCompanyBaseUrl();
+					dataAccess.expireOtherBrowserTokens(token, url);
+					outcome = SUCCESS;
+				} else {
+					reason = Constants.CO_NOT_FOUND;
+				}
+			} else {
+				reason = Constants.BROWSER_NOT_FOUND;
+			}
+		}
+		return new ApiResponseWithToken(outcome, reason, "");
+	}
+	
+	private ApiResponseWithToken validateCompany(CompanyDataAccess dataAccess, TokenDbObj oldToken,
+			IdentityObjectFromServer idObj, String url, String companyIdFromUrl)
+			throws NoSuchAlgorithmException, InvalidKeySpecException {
+		int outcome = Outcomes.FAILURE;
+		String reason = "";
+		String token = "";
+		DeviceDbObj device = idObj.getDevice();
+		dataAccess.addLog(device.getDeviceId(), "device is allowed");
+		dataAccess.addLog("will add token with browserId: " + idObj.getBrowser().getBrowserId());
+		TokenDbObj browserSession = dataAccess.addToken(device, oldToken.getBrowserId(),
+				TokenDescription.BROWSER_SESSION, url);
+		String newSession = browserSession.getTokenId();
+		Encryption encryption = new Encryption();
+
+		boolean wrongCompany = false;
+		if (!TextUtils.isEmpty(companyIdFromUrl)) {
+			dataAccess.addLog(device.getDeviceId(), "companyIdFromUrl: " + companyIdFromUrl);
+			CompanyDbObj companyFromUrl = dataAccess.getCompanyByApiKey(companyIdFromUrl);
+			if (companyFromUrl != null) {
+				if (!companyFromUrl.getCompanyId().equals(idObj.getCompany().getCompanyId())) {
+					if (dataAccess.urlMatchesCompany(idObj.getCompany(), url)) {
+						dataAccess.addLog(device.getDeviceId(), "wrong company");
+						wrongCompany = true;
+					}
+				}
+			}
+		}
+		if (!wrongCompany) {
+			dataAccess.addLog("correct company");
+			token = encryption.encryptBrowserData(idObj.getBrowser(), newSession, url);
+			reason = new JsonWebToken().buildJwtForJs(idObj, url);
+			outcome = Outcomes.SUCCESS;
+			dataAccess.addLog("successful outcome");
+		} else {
+			reason = Constants.COMPANY_USER_MISMATCH;
+		}
+		return new ApiResponseWithToken(outcome, reason, token);
+	}
+
+	protected ApiResponseWithToken validateAccess(String session, String url, String companyIdFromUrl) {
+		CompanyDataAccess dataAccess = new CompanyDataAccess();
+		String reason = "";
+		int outcome = Outcomes.FAILURE;
+		TokenDbObj oldToken = null;
+		String token = "";
+		try {
+			if (!TextUtils.isBlank(session)) {
+				dataAccess.addLog("instanceId: " + session);
+				DeviceDbObj device = null;
+				oldToken = dataAccess.getTokenByDescriptionAndTokenId(TokenDescription.BROWSER_SESSION, session);
+				device = dataAccess.getDeviceByDeviceId(oldToken.getDeviceId(), "validateAccess");
+				if (device != null && device.isActive()) {
+					if (device.getSignedIn()) {
+						dataAccess.addLog("device is signed in");
+						CompanyDbObj company = dataAccess.getCompanyByDevId(device.getDeviceId());
+						BrowserDbObj browser = dataAccess.getBrowserByToken(session, TokenDescription.BROWSER_SESSION);
+						if (company != null) {
+							if (browser != null) {
+								if (!browser.isExpired()) {
+									dataAccess.addLog("browser looks good");
+									IdentityObjectFromServer idObj = new IdentityObjectFromServer(browser, true);
+									baseUrl = company.getCompanyBaseUrl();
+									if (dataAccess.isAccessAllowed(device, "validateAccess")) {
+										ApiResponseWithToken resp = validateCompany(dataAccess, oldToken, idObj,
+												url, companyIdFromUrl);
+										outcome = resp.getOutcome();
+										reason = resp.getReason();
+										token = resp.getToken();
+									} else {
+										dataAccess.addLog("access is not allowed");
+										reason = Constants.NOT_PERMITTED;
+										token = new JsonWebToken().buildExpiredJwt(idObj, url);
+									}
+								} else {
+									reason = Constants.BROWSER_EXPIRED;
+								}
+							} else {
+								reason = Constants.BROWSER_NOT_FOUND;
+							}
+						} else {
+							reason = "bad company ('til the day I die)";
+						}
+					} else {
+						reason = Constants.SIGNED_OUT;
+					}
+				} else {
+					reason = Constants.DEVICE_NOT_FOUND;
+				}
+			} else {
+				reason = Constants.BROWSER_NOT_FOUND;
+			}
+		} catch (Exception e) {
+			dataAccess.addLog(e);
+			reason = e.getLocalizedMessage();
+			outcome = ERROR;
+		}
+		dataAccess.addLog("tokenStr: " + token + ", reason: " + reason);
+		return new ApiResponseWithToken(outcome, reason, token);
+	}
+	
+	protected AccessAllowedWithAccessType validateAccessFromApi(String session, String url) {
+		CompanyDataAccess dataAccess = new CompanyDataAccess();
+		TokenDbObj oldToken = null;
+		AccessAllowedWithAccessType response = new AccessAllowedWithAccessType(false, ConnectionType.NONE, 
+				DateTimeUtilities.getCurrentTimestamp());
+		try {
+			if (!TextUtils.isBlank(session)) {
+				dataAccess.addLog("instanceId: " + session);
+				DeviceDbObj device = null;
+				oldToken = dataAccess.getTokenByDescriptionAndTokenId(TokenDescription.BROWSER_SESSION, session);
+				device = dataAccess.getDeviceByDeviceId(oldToken.getDeviceId(), "validateAccess");
+				if (device != null && device.isActive()) {
+					if (device.getSignedIn()) {
+						dataAccess.addLog("device is signed in");
+						CompanyDbObj company = dataAccess.getCompanyByDevId(device.getDeviceId());
+						BrowserDbObj browser = dataAccess.getBrowserByToken(session, TokenDescription.BROWSER_SESSION);
+						if (company != null) {
+							if (browser != null) {
+								if (!browser.isExpired()) {
+									dataAccess.addLog("browser looks good");
+									IdentityObjectFromServer idObj = new IdentityObjectFromServer(browser, true);
+									baseUrl = company.getCompanyBaseUrl();
+									response = dataAccess.isAccessAllowedWithConnectionMethod(device, 
+											"validateAccessFromApi", false);
+									if (dataAccess.isAccessAllowed(device, "validateAccess")) {
+										if (!dataAccess.urlMatchesCompany(company, url)) {
+											response.setAccessAllowed(false);
+											response.setReason(Constants.COMPANY_URL_MISMATCH);
+										}
+									} else {
+										dataAccess.addLog("access is not allowed");
+										response.setReason(Constants.NOT_PERMITTED);
+										response.setToken(new JsonWebToken().buildExpiredJwt(idObj, url));
+									}
+								} else {
+									response.setReason(Constants.BROWSER_EXPIRED);
+								}
+							} else {
+								response.setReason(Constants.BROWSER_NOT_FOUND);
+							}
+						} else {
+							response.setReason("bad company ('til the day I die)");
+						}
+					} else {
+						response.setReason(Constants.SIGNED_OUT);
+					}
+				} else {
+					response.setReason(Constants.DEVICE_NOT_FOUND);
+				}
+			} else {
+				response.setReason(Constants.BROWSER_NOT_FOUND);
+			}
+		} catch (Exception e) {
+			dataAccess.addLog(e);
+			response.setReason(e.getLocalizedMessage());
+			response.setAccessAllowed(false);
+		}
+		return response;
+	}
+	
+	public ApiResponseWithToken checkSecondFactorFromServer(DeviceDataAccess dataAccess, Encryption encryption,
+			String sessionFromServer, String encryptedSession, String deviceId, String userAgent, String reqUrl,
+			boolean fromBrowser) {
+		int outcome = Outcomes.FAILURE;
+		String reason = "";
+		DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId, "checkSecondFactorFromServer");
+		if (device != null) {
+			if (device.isActive() && device.getSignedIn()) {
+				if (!dataAccess.hasSessionBeenUsed(device, sessionFromServer)) {
+					if (encryption.verifySignatureWithForegroundKey(device, sessionFromServer, encryptedSession)) {
+						if (dataAccess.isAccessAllowed(device, "checkSecondFactorFromServer")) {
+							outcome = Outcomes.SUCCESS;
+						}
+					} else {
+						reason = Constants.DEVICE_NOT_LOCAL;
+					}
+				} else {
+					reason = Constants.EXPIRED_TOKEN;
+				}
+			} else {
+				reason = Constants.SIGNED_OUT;
+			}
+		} else {
+			reason = Constants.DEVICE_NOT_FOUND;
+		}
+		return new ApiResponseWithToken(outcome, reason, "");
+	}
+	
+	public AccessAllowedWithAccessType checkAccessAllowedFromApi(DeviceDataAccess dataAccess, Encryption encryption,
+			String token, String session, String reqUrl) {
+		AccessAllowedWithAccessType response = new AccessAllowedWithAccessType(false, ConnectionType.NONE, 
+				DateTimeUtilities.getCurrentTimestamp());
+		if (session == null) {
+			dataAccess.addLog("session NOT found", LogConstants.WARNING);
+			response.setReason(Constants.DECRYPTION_ERROR);
+		} else if (session == Constants.KEY_NOT_FOUND) {
+			dataAccess.addLog("session NOT found - no key", LogConstants.WARNING);
+			response.setReason(Constants.KEY_NOT_FOUND);
+		} else {
+			dataAccess.addLog("session found");
+			response = validateAccessFromApi(session, reqUrl);
+		}
+		return response;
+
+	}
+	
+	public ApiResponseWithToken checkSecondFactorFromApi(DeviceDataAccess dataAccess, Encryption encryption,
+			String token, String encryptedSession, String userAgent, String reqUrl, String companyId) {
+		ApiResponseWithToken response;
+		String session = encryption.decryptBasedOnBrowserOrServerId(token, encryptedSession, reqUrl);
+		if (session == null) {
+			dataAccess.addLog("session NOT found", LogConstants.WARNING);
+			DeviceDbObj device = dataAccess.getDeviceByBrowserToken(token);
+			if (device != null) {
+				response = new ApiResponseWithToken(Outcomes.API_F2_FAILURE, Constants.DECRYPTION_ERROR, "");
+			} else {
+				response = new ApiResponseWithToken(Outcomes.FAILURE, Constants.DEV_NOT_FOUND, "");
+			}
+		} else if (session == Constants.KEY_NOT_FOUND) {
+			dataAccess.addLog("session NOT found - no key", LogConstants.WARNING);
+			response = new ApiResponseWithToken(Outcomes.FAILURE, session, "");
+		} else {
+			dataAccess.addLog("session found");
+			response = validateAccess(session, reqUrl, companyId);
+		}
+		return response;
+
+	}
 
 	/*
 	 * right now this is for test users from google and apple. They need to be able

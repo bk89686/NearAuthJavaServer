@@ -217,18 +217,17 @@ function differenceInSecondsFromNow(dt){
     return seconds;
 }
 
-/* Go to B2f to see if the we are still validated */
+/* See if the current browser should have access */
 async function validateB2f(){
     const browserSession = await getEncryptedSession();
     if (!isValidating()) {
         cLog("checking B2F", INFO);
         if (browserSession && browserSession !== "error") {
             const browserToken = getBrowserToken();
-            const dataToSend = JSON.stringify({"companyIdFromUrl": "",
-                                               "encryptedSession": browserSession, "fromBrowser": true,
-                                               "reqType": "factor2Check", "reqUrl": window.location.href,
-                                               "token": browserToken, "userAgent": ""});
-            fetch(getEndpoint() + "/b2fBrowser", {
+            const dataToSend = JSON.stringify({"encryptedSession": browserSession,
+                                               "reqUrl": window.location.href,
+                                               "token": browserToken});
+            fetch(getEndpoint() + "/verifyAccess", {
                 body:dataToSend,
                 credentials: "omit",
                 headers: {
@@ -330,18 +329,14 @@ function arrayBufferToBase64(buffer) {
     return window.btoa(binary);
 }
 
-async function validateToken(browserSession){
+async function confirmToken(browserSession){
     const encToken = await encryptString(browserSession, false);
     const dataToSend = JSON.stringify({
-        "companyIdFromUrl": "",
         "encryptedSession": encToken,
-        "fromBrowser": true,
-        "reqType": "confirm",
         "reqUrl": window.location.href,
         "token": getBrowserToken(),
-        "userAgent": ""
     });
-    fetch(getEndpoint() + "/b2fBrowser", {
+    fetch(getEndpoint() + "/confirmToken", {
         body:dataToSend,
         headers: {
             "Accept": "application/json",
@@ -377,7 +372,7 @@ async function decryptToken(encryptedString) {
                     }, pvtKey, encryptedArrayBuffer);
              //we'll throw an error if decrypt fails
             decryptedString = arrayBufferToString(decryptedArrayBuffer);
-            await validateToken(decryptedString);
+            await confirmToken(decryptedString);
         }
     } catch (error) {
         cLog("decryptToken: " + error, ERROR);

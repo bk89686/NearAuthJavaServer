@@ -1,8 +1,6 @@
 package com.humansarehuman.blue2factor.authentication.api;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 
@@ -113,7 +111,7 @@ public class Factor2Check extends B2fApi {
 				response = performSecondaryAuthentication(session);
 			} else if (requestType.equals(Constants.PUSH_CHECK)) {
 				session = encryption.decryptBasedOnBrowserOrServerId(token, encryptedSession, reqUrl);
-				response = validateAccess(session, userAgent, reqUrl, companyId);
+				response = validateAccess(session, reqUrl, companyId);
 			} else if (requestType.equals(Constants.DEALLOCATE)) {
 				response = deactivateKeysAndBiometrics(dataAccess, encryptedSession, reqUrl);
 			} else if (requestType.equals(Constants.SEND_LOUD_PUSH)) {
@@ -146,57 +144,6 @@ public class Factor2Check extends B2fApi {
 			response = new ApiResponseWithToken(Outcomes.API_F2_FAILURE, Constants.BROWSER_NOT_FOUND, "");
 		}
 		return response;
-	}
-
-	public ApiResponseWithToken checkSecondFactorFromApi(DeviceDataAccess dataAccess, Encryption encryption,
-			String token, String encryptedSession, String userAgent, String reqUrl, String companyId) {
-		ApiResponseWithToken response;
-		String session = encryption.decryptBasedOnBrowserOrServerId(token, encryptedSession, reqUrl);
-		if (session == null) {
-			dataAccess.addLog("session NOT found", LogConstants.WARNING);
-			DeviceDbObj device = dataAccess.getDeviceByBrowserToken(token);
-			if (device != null) {
-				response = new ApiResponseWithToken(Outcomes.API_F2_FAILURE, Constants.DECRYPTION_ERROR, "");
-			} else {
-				response = new ApiResponseWithToken(Outcomes.FAILURE, Constants.DEV_NOT_FOUND, "");
-			}
-		} else if (session == Constants.KEY_NOT_FOUND) {
-			dataAccess.addLog("session NOT found - no key", LogConstants.WARNING);
-			response = new ApiResponseWithToken(Outcomes.FAILURE, session, "");
-		} else {
-			dataAccess.addLog("session found");
-			response = validateAccess(session, userAgent, reqUrl, companyId);
-		}
-		return response;
-
-	}
-
-	public ApiResponseWithToken checkSecondFactorFromServer(DeviceDataAccess dataAccess, Encryption encryption,
-			String sessionFromServer, String encryptedSession, String deviceId, String userAgent, String reqUrl,
-			boolean fromBrowser) {
-		int outcome = Outcomes.FAILURE;
-		String reason = "";
-		DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId, "checkSecondFactorFromServer");
-		if (device != null) {
-			if (device.isActive() && device.getSignedIn()) {
-				if (!dataAccess.hasSessionBeenUsed(device, sessionFromServer)) {
-					if (encryption.verifySignatureWithForegroundKey(device, sessionFromServer, encryptedSession)) {
-						if (dataAccess.isAccessAllowed(device, "checkSecondFactorFromServer")) {
-							outcome = Outcomes.SUCCESS;
-						}
-					} else {
-						reason = Constants.DEVICE_NOT_LOCAL;
-					}
-				} else {
-					reason = Constants.EXPIRED_TOKEN;
-				}
-			} else {
-				reason = Constants.SIGNED_OUT;
-			}
-		} else {
-			reason = Constants.DEVICE_NOT_FOUND;
-		}
-		return new ApiResponseWithToken(outcome, reason, "");
 	}
 
 	public ApiResponseWithToken deactivateFingerprint(BrowserDbObj browser, String reqUrl) {
@@ -430,29 +377,6 @@ public class Factor2Check extends B2fApi {
 		return new ApiResponseWithToken(outcome, reason, tokenStr);
 	}
 
-	private ApiResponseWithToken expireInstance(String browserId, String url) {
-		int outcome = Outcomes.FAILURE;
-		String reason = "";
-		if (browserId != null) {
-			CompanyDataAccess dataAccess = new CompanyDataAccess();
-			dataAccess.addLog("called on " + browserId);
-			TokenDbObj token = dataAccess.getToken(browserId);
-			if (token != null) {
-				CompanyDbObj company = dataAccess.getCompanyByDevId(token.getDeviceId());
-				if (company != null) {
-					baseUrl = company.getCompanyBaseUrl();
-					dataAccess.expireOtherBrowserTokens(token, url);
-					outcome = SUCCESS;
-				} else {
-					reason = Constants.CO_NOT_FOUND;
-				}
-			} else {
-				reason = Constants.BROWSER_NOT_FOUND;
-			}
-		}
-		return new ApiResponseWithToken(outcome, reason, "");
-	}
-
 	private ApiResponseWithToken validateSignupCheck(String accessCode) {
 		String reason = "";
 		int outcome = Outcomes.FAILURE;
@@ -481,129 +405,5 @@ public class Factor2Check extends B2fApi {
 		}
 		dataAccess.addLog("outcome: " + outcome);
 		return new ApiResponseWithToken(outcome, reason, tokenStr);
-	}
-
-//    private ApiResponseWithToken verifyBrowser(String browserToken) {
-//        CompanyDataAccess dataAccess = new CompanyDataAccess();
-//        String reason = "";
-//        int outcome = Constants.FAILURE;
-//        try {
-//            if (!TextUtils.isEmpty(browserToken)) {
-//                dataAccess.addLog("verifyBrowser", "browserToken: " + browserToken);
-//                if (browserToken.endsWith("sync")) {
-//                    browserToken = browserToken.substring(0, browserToken.length() - 4);
-//                }
-//                DeviceDbObj device = dataAccess.getDeviceByToken(browserToken, "verifyBrowser");
-//                if (device != null) {
-//                    outcome = Constants.SUCCESS;
-//                } else {
-//                    reason = Constants.BROWSER_NOT_FOUND;
-//                }
-//            } else {
-//                reason = Constants.TOKEN_NOT_FOUND;
-//            }
-//        } catch (Exception e) {
-//            reason = e.getMessage();
-//        }
-//        return new ApiResponseWithToken(outcome, reason, "");
-//    }
-
-	private ApiResponseWithToken validateCompany(CompanyDataAccess dataAccess, String token, TokenDbObj oldToken,
-			IdentityObjectFromServer idObj, String url, String companyIdFromUrl)
-			throws NoSuchAlgorithmException, InvalidKeySpecException {
-		int outcome = Outcomes.FAILURE;
-		String reason = "";
-		DeviceDbObj device = idObj.getDevice();
-		dataAccess.addLog(device.getDeviceId(), "device is allowed");
-		dataAccess.addLog("will add token with browserId: " + idObj.getBrowser().getBrowserId());
-		TokenDbObj browserSession = dataAccess.addToken(device, oldToken.getBrowserId(),
-				TokenDescription.BROWSER_SESSION, url);
-		String newSession = browserSession.getTokenId();
-		Encryption encryption = new Encryption();
-
-		boolean wrongCompany = false;
-		if (!TextUtils.isEmpty(companyIdFromUrl)) {
-			dataAccess.addLog(device.getDeviceId(), "companyIdFromUrl: " + companyIdFromUrl);
-			CompanyDbObj companyFromUrl = dataAccess.getCompanyByApiKey(companyIdFromUrl);
-			if (companyFromUrl != null) {
-				if (!companyFromUrl.getCompanyId().equals(idObj.getCompany().getCompanyId())) {
-					if (dataAccess.urlMatchesCompany(idObj.getCompany(), url)) {
-						dataAccess.addLog(device.getDeviceId(), "wrong company");
-						wrongCompany = true;
-					}
-				}
-			}
-		}
-		if (!wrongCompany) {
-			dataAccess.addLog("correct company");
-			token = encryption.encryptBrowserData(idObj.getBrowser(), newSession, url);
-			reason = new JsonWebToken().buildJwtForJs(idObj, url);
-			outcome = Outcomes.SUCCESS;
-			dataAccess.addLog("successful outcome");
-		} else {
-			reason = Constants.COMPANY_USER_MISMATCH;
-		}
-		return new ApiResponseWithToken(outcome, reason, token);
-	}
-
-	private ApiResponseWithToken validateAccess(String session, String userAgent, String url, String companyIdFromUrl) {
-		CompanyDataAccess dataAccess = new CompanyDataAccess();
-		String reason = "";
-		int outcome = Outcomes.FAILURE;
-		String token = "";
-		TokenDbObj oldToken = null;
-		try {
-			if (!TextUtils.isBlank(session)) {
-				dataAccess.addLog("instanceId: " + session);
-				DeviceDbObj device = null;
-				oldToken = dataAccess.getTokenByDescriptionAndTokenId(TokenDescription.BROWSER_SESSION, session);
-				device = dataAccess.getDeviceByDeviceId(oldToken.getDeviceId(), "validateAccess");
-				if (device != null && device.isActive()) {
-					if (device.getSignedIn()) {
-						dataAccess.addLog("device is signed in");
-						CompanyDbObj company = dataAccess.getCompanyByDevId(device.getDeviceId());
-						BrowserDbObj browser = dataAccess.getBrowserByToken(session, TokenDescription.BROWSER_SESSION);
-						if (company != null) {
-							if (browser != null) {
-								if (!browser.isExpired()) {
-									dataAccess.addLog("browser looks good");
-									IdentityObjectFromServer idObj = new IdentityObjectFromServer(browser, true);
-									baseUrl = company.getCompanyBaseUrl();
-									if (dataAccess.isAccessAllowed(device, "validateAccess")) {
-										ApiResponseWithToken resp = validateCompany(dataAccess, token, oldToken, idObj,
-												url, companyIdFromUrl);
-										outcome = resp.getOutcome();
-										reason = resp.getReason();
-										token = resp.getToken();
-									} else {
-										dataAccess.addLog("access is not allowed");
-										reason = Constants.NOT_PERMITTED;
-										token = new JsonWebToken().buildExpiredJwt(idObj, url);
-									}
-								} else {
-									reason = Constants.BROWSER_EXPIRED;
-								}
-							} else {
-								reason = Constants.BROWSER_NOT_FOUND;
-							}
-						} else {
-							reason = "bad company ('til the day I die)";
-						}
-					} else {
-						reason = Constants.SIGNED_OUT;
-					}
-				} else {
-					reason = Constants.DEVICE_NOT_FOUND;
-				}
-			} else {
-				reason = Constants.BROWSER_NOT_FOUND;
-			}
-		} catch (Exception e) {
-			dataAccess.addLog(e);
-			reason = e.getLocalizedMessage();
-			outcome = ERROR;
-		}
-		dataAccess.addLog("tokenStr: " + token + ", reason: " + reason);
-		return new ApiResponseWithToken(outcome, reason, token);
 	}
 }
