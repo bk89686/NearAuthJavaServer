@@ -188,12 +188,19 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 	}
 
 	public RssiAndTime getRssiForPeripheral(DeviceDbObj device, DeviceConnectionDbObj conn) {
-		Integer rssi = conn.getPeripheralRssi();
-		Timestamp ts = conn.getPeripheralRssiTimestamp();
-		if (rssi >= 0 || rssi == null) {
+		Integer rssi;
+		Timestamp ts;
+		Timestamp perfTs = conn.getPeripheralRssiTimestamp();
+		Timestamp centralTs = conn.getCentralRssiTimestamp();
+		if (centralTs.after(perfTs)) {
+			ts = centralTs;
 			rssi = conn.getCentralRssi();
-			ts = conn.getCentralRssiTimestamp();
+		} else {
+			ts = perfTs;
+			rssi = conn.getPeripheralRssi();
 		}
+		
+		this.addLog("rssi timestamp: " + ts, LogConstants.TEMPORARILY_IMPORTANT);
 		return new RssiAndTime(rssi, ts);
 	}
 

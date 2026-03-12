@@ -79,8 +79,9 @@ public class BluetoothConnected extends BaseController {
 										+ connection.getPeripheralIdentifier() + " This sucks -- from " + src;
 								dataAccess.addLog(deviceId, "bluetoothConnectedPost", reason, LogConstants.ERROR);
 								HashMap<String, Object> hm = new HashMap<String, Object>();
-								hm.put("PERIPHERAL_IDENTIFIER", "");
-								dataAccess.updateConnectionMap(connection, hm, "bluetoothConnectedPost");
+								if (peripheralReference != null && !peripheralReference.equals("null")) {								hm.put("PERIPHERAL_IDENTIFIER", "");
+									dataAccess.updateConnectionMap(connection, hm, "bluetoothConnectedPost");
+								}
 								reason = Constants.NEEDS_RESCAN;
 							}
 						} else {

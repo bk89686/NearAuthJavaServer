@@ -843,25 +843,28 @@ public class Encryption {
 		return strKey;
 	}
 
-	private String encrypt(String data, PublicKey publicKey) throws BadPaddingException, IllegalBlockSizeException,
-			InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
+	//SecKeyAlgorithm.rsaEncryptionPKCS1
+	public String encrypt(String plainText, PublicKey publicKey) throws BadPaddingException, IllegalBlockSizeException,
+			InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, UnsupportedEncodingException {
 		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-		String encrypted = null;
+		String base64 = null;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		if (publicKey != null) {
 			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 			DataAccess dataAccess = new DataAccess();
-			dataAccess.addLog("encrypting: " + data);
+			dataAccess.addLog("encrypting: " + plainText, logLevel);
 			dataAccess.addLog("with:\r"
 					+ GeneralUtilities.addCarriageReturnEvery64(new Encryption().publicKeyToString(publicKey)));
 			dataAccess.addLog("keyData: " + getPublicKeyData(publicKey));
-			byte[] bytes = cipher.doFinal(data.getBytes());
-			String byteStr = getByteString(bytes);
-			encrypted = Base64.getEncoder().encodeToString(bytes);
+			byte[] encryptedBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
+			String byteStr = getByteString(encryptedBytes);
+			base64 = Base64.getEncoder().encodeToString(encryptedBytes);
 			dataAccess.addLog("bytes: " + byteStr);
-			dataAccess.addLog("encrypted: " + GeneralUtilities.addCarriageReturnEvery64(encrypted));
+			dataAccess.addLog("encrypted: " + GeneralUtilities.addCarriageReturnEvery64(base64));
 		}
-		return encrypted;
+		return base64;
 	}
+	
 
 	public String getPublicKeyData(PublicKey pk) {
 		RSAPublicKey rsaPub = (RSAPublicKey) (pk);
@@ -928,7 +931,7 @@ public class Encryption {
 		return encrypted;
 	}
 
-	private PublicKey stringToPublicKey(String keyString, OsClass osClass)
+	public PublicKey stringToPublicKey(String keyString, OsClass osClass)
 			throws NoSuchAlgorithmException, InvalidKeySpecException {
 		PublicKey generatedPublic = null;
 		DataAccess dataAccess = new DataAccess();
@@ -985,10 +988,16 @@ public class Encryption {
 			org.bouncycastle.asn1.pkcs.RSAPublicKey pkcs1PublicKey = org.bouncycastle.asn1.pkcs.RSAPublicKey
 					.getInstance(decoded);
 			BigInteger modulus = pkcs1PublicKey.getModulus();
+			byte[] modBytes = modulus.toByteArray();
+			if (modBytes.length == 257 && modBytes[0] == 0) {
+			    byte[] reformat = new byte[256];
+			    System.arraycopy(modBytes, 1, reformat, 0, 256);
+			    modBytes = reformat;
+			}
 			BigInteger publicExponent = pkcs1PublicKey.getPublicExponent();
-			dataAccess.addLog("modulus: " + modulus);
-			dataAccess.addLog("publicExponent: " + publicExponent);
-			RSAPublicKeySpec keySpec = new RSAPublicKeySpec(modulus, publicExponent);
+			dataAccess.addLog("modulus: " + modulus, LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("publicExponent: " + publicExponent, LogConstants.TEMPORARILY_IMPORTANT);
+			RSAPublicKeySpec keySpec = new RSAPublicKeySpec(new BigInteger(1, modBytes), publicExponent);
 			KeyFactory kf = KeyFactory.getInstance("RSA");
 			generatedPublic = kf.generatePublic(keySpec);
 			keyToString(generatedPublic);
@@ -1049,13 +1058,12 @@ public class Encryption {
 		String[] encPair = new String[2];
 		DataAccess dataAccess = new DataAccess();
 		try {
-			dataAccess.addLog("getting encrypted iD for " + osClass.name());
 			PublicKey pk = stringToPublicKey(keyText, osClass);
 			if (pk != null) {
 				encPair = this.createEncryptedInstanceIdWithPublicKey(pk, firstLetter, osClass);
-				dataAccess.addLog("encrypted: " + encPair[0], LogConstants.TEMPORARILY_IMPORTANT);
-				dataAccess.addLog("to: " + encPair[1], LogConstants.TEMPORARILY_IMPORTANT);
-//				dataAccess.addLog("with: " + new Encryption().publicKeyToString(pk), LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog(osClass + ": encrypted: " + encPair[0], LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog(osClass + ": to: " + encPair[1], LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog(osClass + ": with " + keyText, LogConstants.TEMPORARILY_IMPORTANT);
 			} else {
 				dataAccess.addLog("the text '" + keyText + "' is not a valid key", LogConstants.ERROR);
 			}
@@ -1160,10 +1168,6 @@ public class Encryption {
 		if (key != null) {
 			String keyText = key.getKeyText();
 			if (keyText != null) {
-				dataAccess.addLog(device.getDeviceId(), "OS: " + device.getOperatingSystem(), 
-						LogConstants.TEMPORARILY_IMPORTANT);
-				dataAccess.addLog("for device type " + device.getDeviceType(), LogConstants.TEMPORARILY_IMPORTANT);
-				dataAccess.addLog("using key " + keyText, LogConstants.TEMPORARILY_IMPORTANT);
 				enc = this.createEncryptedInstanceIdWithKeyText(keyText, device.getOperatingSystem(), firstLetter);
 			} else {
 				dataAccess.addLog("keyText was null for " + device.getDeviceId(), LogConstants.ERROR);

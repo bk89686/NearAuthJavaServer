@@ -1149,17 +1149,15 @@ public abstract class BaseController {
 			String firstLetter = GeneralUtilities.randomLetters(1);
 			String[] centralInstanceIdPair = new Encryption().createEncryptedInstanceId(centralDevice, firstLetter);
 			if (centralInstanceIdPair != null) {
-				dataAccess.addLog(peripheral.getDeviceId(), "new instance pairs will be created from central",
+				dataAccess.addLog(peripheral.getDeviceId(), "new instance pair was created for our central",
+						LogConstants.IMPORTANT);
+				dataAccess.addLog(peripheral.getDeviceId(), "it is: " + centralInstanceIdPair[0] + " = " + centralInstanceIdPair[1],
 						LogConstants.IMPORTANT);
 				KeyDbObj key = Encryption.getDevicePublicKey(peripheral);
 				if (key != null) {
-					dataAccess.addLog(peripheral.getDeviceId(), "key_text_perf: " + key.getKeyText(), LogConstants.TEMPORARILY_IMPORTANT);
 					String[] peripheralInstanceIdPair = new Encryption().createEncryptedInstanceId(key, peripheral,
 							firstLetter);
 					if (peripheralInstanceIdPair != null) {
-						dataAccess.addLog(peripheral.getDeviceId(), "perfPairLen: " + peripheralInstanceIdPair.length);
-						dataAccess.addLog(centralDevice.getDeviceId(),
-								"centralPairLen: " + centralInstanceIdPair.length);
 						attrs = new ConnectionAttrs(connection.getServiceUuid(), connection.getCharacteristicUuid(),
 								"dev" + iteration, deviceConnected, centralInstanceIdPair[1],
 								peripheralInstanceIdPair[1], instanceId, DateTimeUtilities.getCurrentTimestamp(),
@@ -1174,7 +1172,7 @@ public abstract class BaseController {
 									centralDevice.getUserId(), clientIpAddress, ssid, null, null, false, false,
 									Outcomes.INCOMPLETE, DateTimeUtilities.getCurrentTimestamp(), null, false,
 									checkType, centralInstanceIdPair[0], peripheralInstanceIdPair[0]);
-							dataAccess.addLog(centralDevice.getDeviceId(), "added Check");
+							dataAccess.addLog(centralDevice.getDeviceId(), "added Check", LogConstants.TEMPORARILY_IMPORTANT);
 							dataAccess.addCheck(check);
 						} else {
 							dataAccess.addLog("check not added because Ble was not available for connection",

@@ -3480,7 +3480,9 @@ public class DataAccess extends DeviceFields {
 		if (!dontLog && logLevel >= LogConstants.LOG_LEVEL) {
 			String src = source;
 			if (src.length() > 2000) {
-				src = src.substring(0, 2000);
+				String new_src = src.substring(0, 2000);
+				addLog(devId, source, src.substring(2001), logLevel, env);
+				src = new_src;
 			}
 			if (source == null) {
 				src = "no source";
@@ -5225,11 +5227,7 @@ public class DataAccess extends DeviceFields {
 				prepStmt.setString(18, check.getCentralInstanceId());
 				prepStmt.setString(19, check.getPeripheralInstanceId());
 				prepStmt.setTimestamp(20, check.getExpirationDate());
-				if (check.getCheckType() != CheckType.PROX) {
-					logQueryImportant("addCheck", prepStmt);
-				} else {
-					logQuery("addCheck", prepStmt);
-				}
+				logQueryImportant("addCheck", prepStmt);
 
 				prepStmt.executeUpdate();
 			} catch (SQLException e) {

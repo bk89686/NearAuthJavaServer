@@ -61,13 +61,14 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 	public @ResponseBody ApiResponse postJson(@RequestBody FingerprintAuth auth, HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		ApiResponse apiResponse;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
-		dataAccess.addLog("FingerprintAuthenticationCompletion", "auth: " + auth.toString(), LogConstants.TRACE);
+		dataAccess.addLog("auth: " + auth.toString(), logLevel);
 		String browserSession = auth.getBrowserSession();
 
-		dataAccess.addLog("FingerprintAuthenticationCompletion", "b2fSession: " + browserSession);
+		dataAccess.addLog("b2fSession: " + browserSession, logLevel);
 		String reqUrl = auth.getReqUrl();
-		dataAccess.addLog("FingerprintAuthenticationCompletion", "reqUrl: " + reqUrl + "; ");
+		dataAccess.addLog("FingerprintAuthenticationCompletion", "reqUrl: " + reqUrl + "; ", logLevel);
 		CompanyDbObj company = dataAccess.getCompanyByToken(browserSession);
 		if (this.doesUrlMatchRegex(company, reqUrl, dataAccess) != "") {
 			response = new GeneralUtilities().setResponseHeader(response, reqUrl);
@@ -82,6 +83,7 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 		DataAccess dataAccess = new DataAccess();
 		// Client properties
 		int outcome = Outcomes.FAILURE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		String reason = "";
 		AuthResponse authResp = auth.getResponse();
 		String browserSession = auth.getBrowserSession();
@@ -96,17 +98,15 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 		
 		byte[] signature = Base64.getUrlDecoder().decode(authResp.getSignature());
 
-		dataAccess.addLog("handleFingerprintCompletion", "#2: " + Arrays.toString(signature));
-
 		String url = auth.getReqUrl();
 		Origin origin = new Origin(GeneralUtilities.getUrlProtocolAndHost(url));
 		String rpId = GeneralUtilities.getNakedDomain(url);
 		AuthenticatorDbObj authDbObj = dataAccess.getActiveAuthenticatorByCredentialId(credIdStr);
 		if (authDbObj != null) {
-			dataAccess.addLog("handleFingerprintCompletion", "authDbObj found for: " + credIdStr, LogConstants.TRACE);
-			dataAccess.addLog("handleFingerprintCompletion", "origin: " + origin);
-			dataAccess.addLog("handleFingerprintCompletion", "rpId: " + rpId);
-			dataAccess.addLog("handleFingerprintCompletion", "challenge: " + authDbObj.getChallenge());
+			dataAccess.addLog("authDbObj found for: " + credIdStr, logLevel);
+			dataAccess.addLog("origin: " + origin, logLevel);
+			dataAccess.addLog("rpId: " + rpId, logLevel);
+			dataAccess.addLog("challenge: " + authDbObj.getChallenge(), logLevel);
 			Challenge challenge = new DefaultChallenge(authDbObj.getChallenge());
 //			byte[] tokenBindingId = new byte[] { 0x01, 0x23, 0x45 };
 //			ServerProperty serverPropertyOld = new ServerProperty(origin, rpId, challenge, tokenBindingId);
@@ -118,7 +118,7 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 //			Authenticator authenticator = new AuthenticatorImpl(authDbObj.getAttestedCredentialData(),
 //					authDbObj.getAttestationObject().getAttestationStatement(), authDbObj.getSignCount());
 			CredentialRecord credentialRecord = new CredentialRecordImpl(authDbObj.getAttestationObject(), collectedClientData, null, null);
-			dataAccess.addLog("handleFingerprintCompletion", "authenticator created");
+			dataAccess.addLog("authenticator created", logLevel);
 			AuthenticationRequest authenticationRequest = new AuthenticationRequest(credentialId, authenticatorData,
 					clientDataJSONBytes, signature);
 			AuthenticationParameters authenticationParameters = new AuthenticationParameters(serverProperty,
@@ -128,23 +128,24 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 			try {
 				authenticationData = webAuthnManager.parse(authenticationRequest);
 				try {
-					dataAccess.addLog("handleFingerprintCompletion", "authenticationData parsed");
+					dataAccess.addLog("authenticationData parsed: " + authenticationData, logLevel);
+					dataAccess.addLog("authenticationParameters: " + authenticationParameters, logLevel);
 					webAuthnManager.verify(authenticationData, authenticationParameters);
 //					webAuthnManager.validate(authenticationData, authenticationParameters);
-					dataAccess.addLog("handleFingerprintCompletion", "webAuthnManager validated", LogConstants.TRACE);
+					dataAccess.addLog("webAuthnManager validated", logLevel);
 					String session = dataAccess.addCompletedCheckForFingerprint(this, browserSession, request);
 					if (session != null) {
 						reason = session;
 						outcome = Outcomes.SUCCESS;
 					}
 				} catch (Exception e) {
-					dataAccess.addLog("handleFingerprintCompletion", e);
+					dataAccess.addLog("general exception", e);
 					reason = Constants.SIGNATURE_VALIDATION_FAILED;
 				}
 				authDbObj.setSignCount(authenticationData.getAuthenticatorData().getSignCount());
 				dataAccess.updateAuthenticatorByBrowserAndUrl(authDbObj);
 			} catch (DataConversionException e) {
-				dataAccess.addLog("handleFingerprintCompletion", e);
+				dataAccess.addLog("data Error", e);
 			}
 
 		}

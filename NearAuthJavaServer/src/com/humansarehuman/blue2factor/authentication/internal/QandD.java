@@ -1,5 +1,8 @@
 package com.humansarehuman.blue2factor.authentication.internal;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,11 +17,17 @@ import com.google.firebase.messaging.Message;
 import com.humansarehuman.blue2factor.authentication.api.B2fApi;
 import com.humansarehuman.blue2factor.communication.Emailer;
 import com.humansarehuman.blue2factor.communication.PushNotifications;
+import com.humansarehuman.blue2factor.constants.Constants;
 import com.humansarehuman.blue2factor.constants.Outcomes;
 import com.humansarehuman.blue2factor.constants.Urls;
+import com.humansarehuman.blue2factor.dataAndAccess.CompanyDataAccess;
 import com.humansarehuman.blue2factor.dataAndAccess.DeviceDataAccess;
 import com.humansarehuman.blue2factor.entities.BasicResponse;
+import com.humansarehuman.blue2factor.entities.enums.KeyType;
+import com.humansarehuman.blue2factor.entities.enums.OsClass;
 import com.humansarehuman.blue2factor.entities.tables.DeviceDbObj;
+import com.humansarehuman.blue2factor.entities.tables.KeyDbObj;
+import com.humansarehuman.blue2factor.utilities.Encryption;
 import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 import com.humansarehuman.blue2factor.utilities.JsonUtilities;
 
@@ -80,9 +89,43 @@ public class QandD extends B2fApi {
 //			dataAccess.updateCompany(company);
 //			i++;
 //		}
-		BasicResponse br = new BasicResponse(Outcomes.SUCCESS, Integer.toString(i));
+		BasicResponse br = testEncryption();
 		model = this.addBasicResponse(model, br);
 		return "result";
+	}
+	
+	public BasicResponse testEncryption() {
+		int outcome = Outcomes.FAILURE;
+		String reason = "";
+		String token = "";
+				
+		String myStr = "QyHKltlw2xYq8Vp1II5V";
+		String onDev = "Sj6fYnqg0h7QmjHvyCRXroEbVEs6ccQMq2WiTilR8b8ypnCGyh04nflPKIlBuBMZZ2b5Gt7shHkDxrh9Pn1PTAUYAjSbVQw3WqljrTKYFjFNw7VlTTAlPrjLVDJ3Q6TBnPn4LlPaMabfkhULqyMGZHkP8b45XRuME/BzTChdPQDByh85sm0uf5phy3+Q2lyxBjbsjKO1mz6ylUwqDZ3ENdLNEmlW6yQYN/FiYfuO2gm6iN5+UV/CanGkTX2iuaxnkGdaZL189YStdBv/9WC4BFfDP4Ouv9PezWKSZXVrZRGrNSmi93RahaEP/uXN/m89DYXnYp48LPFioday+I1G9Q==";
+		String devId = "nSeTdffZBOwrlqIGOVc1dMwZDX8Hn4rZ0aXu7zhC";
+		CompanyDataAccess dataAccess = new CompanyDataAccess();
+		KeyDbObj key = dataAccess.getKeyByTypeAndDeviceId(KeyType.DEVICE_PUBLIC_KEY, devId);
+		if (key != null) {
+			Encryption encryption = new Encryption();
+			String keyText = key.getKeyText();
+			token = keyText;
+			PublicKey pk;
+			try {
+				pk = encryption.stringToPublicKey(keyText, OsClass.IOS);
+				String encrypted = encryption.encrypt(myStr, pk);
+				if (encrypted.equals(onDev)) {
+					outcome = Outcomes.SUCCESS;
+				} else {
+					reason = encrypted + " != " + onDev;
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				dataAccess.addLog(e);
+			}
+			
+		} else {
+			reason = Constants.KEY_NOT_FOUND;
+		}
+		return new BasicResponse(outcome, reason, token);
 	}
 
 	public BasicResponse sendTestEmail() {
