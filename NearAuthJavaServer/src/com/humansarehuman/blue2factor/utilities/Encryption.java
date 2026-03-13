@@ -540,7 +540,7 @@ public class Encryption {
 			throws Exception {
 		DataAccess dataAccess = new DataAccess();
 		boolean success = false;
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		signature = signature.replaceAll("%2B", "+");
 		signature = signature.replaceAll("%2F", "/");
 		signature = signature.replaceAll("%3D", "=");
@@ -582,7 +582,7 @@ public class Encryption {
 	private boolean verifySignatureApple(String plainText, String signatureString, PublicKey publicKey)
 			throws Exception {
 		DataAccess dataAccess = new DataAccess();
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		boolean success = false;
 		try {
 			Signature sign = Signature.getInstance("SHA256withRSA");

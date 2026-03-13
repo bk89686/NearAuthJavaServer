@@ -277,12 +277,6 @@ public class DateTimeUtilities {
 		return new Timestamp(ts.getTime() - (secondsToSubtract * 1000));
 	}
 
-//    public static Date subtractSeconds(Date dt, int secondsToSubtract) {
-//        Date newTime = new Date();
-//        newTime.setTime(dt.getTime() - TimeUnit.SECONDS.toMillis(secondsToSubtract));
-//        return newTime;
-//    }
-
 	public static Timestamp dateTimeToTimestamp(DateTime datetime) {
 		return new Timestamp(datetime.getMillis());
 	}

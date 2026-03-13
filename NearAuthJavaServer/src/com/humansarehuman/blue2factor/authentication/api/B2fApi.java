@@ -127,6 +127,26 @@ public class B2fApi extends BaseController {
 		}
 		return new ApiResponseWithToken(outcome, reason, token);
 	}
+	
+	private AccessAllowedWithAccessType addNewToken(CompanyDataAccess dataAccess, AccessAllowedWithAccessType accessAllowed, 
+			DeviceDbObj device, IdentityObjectFromServer idObj, TokenDbObj oldToken, String url) {
+		if (oldToken.getDeviceId().equals(device.getDeviceId())) {
+			TokenDbObj browserSession = dataAccess.addToken(device, oldToken.getBrowserId(),
+					TokenDescription.BROWSER_SESSION, url);
+			String newSession = browserSession.getTokenId();
+			Encryption encryption = new Encryption();
+			try {
+				String token = encryption.encryptBrowserData(idObj.getBrowser(), newSession, url);
+				String reason = new JsonWebToken().buildJwtForJs(idObj, url);
+				accessAllowed.setToken(token);
+				accessAllowed.setReason(reason);
+			} catch (Exception e) {
+				dataAccess.addLog(e);
+			} 
+			
+		}
+		return accessAllowed;
+	}
 
 	protected ApiResponseWithToken validateAccess(String session, String url, String companyIdFromUrl) {
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
@@ -213,10 +233,12 @@ public class B2fApi extends BaseController {
 									baseUrl = company.getCompanyBaseUrl();
 									response = dataAccess.isAccessAllowedWithConnectionMethod(device, 
 											"validateAccessFromApi", false);
-									if (dataAccess.isAccessAllowed(device, "validateAccess")) {
+									if (response.isAccessAllowed()) {
 										if (!dataAccess.urlMatchesCompany(company, url)) {
 											response.setAccessAllowed(false);
 											response.setReason(Constants.COMPANY_URL_MISMATCH);
+										} else {
+											response = addNewToken(dataAccess, response, device, idObj, oldToken, url);
 										}
 									} else {
 										dataAccess.addLog("access is not allowed");
@@ -245,6 +267,9 @@ public class B2fApi extends BaseController {
 			dataAccess.addLog(e);
 			response.setReason(e.getLocalizedMessage());
 			response.setAccessAllowed(false);
+		}
+		if (!TextUtils.isBlank(response.getReason())) {
+			dataAccess.addLog(response.getReason(), LogConstants.WARNING);
 		}
 		return response;
 	}
@@ -281,15 +306,19 @@ public class B2fApi extends BaseController {
 			String token, String session, String reqUrl) {
 		AccessAllowedWithAccessType response = new AccessAllowedWithAccessType(false, ConnectionType.NONE, 
 				DateTimeUtilities.getCurrentTimestamp());
-		if (session == null) {
-			dataAccess.addLog("session NOT found", LogConstants.WARNING);
-			response.setReason(Constants.DECRYPTION_ERROR);
-		} else if (session == Constants.KEY_NOT_FOUND) {
-			dataAccess.addLog("session NOT found - no key", LogConstants.WARNING);
-			response.setReason(Constants.KEY_NOT_FOUND);
-		} else {
-			dataAccess.addLog("session found");
-			response = validateAccessFromApi(session, reqUrl);
+		try {
+			if (session == null) {
+				dataAccess.addLog("session NOT found", LogConstants.WARNING);
+				response.setReason(Constants.DECRYPTION_ERROR);
+			} else if (session == Constants.KEY_NOT_FOUND) {
+				dataAccess.addLog("session NOT found - no key", LogConstants.WARNING);
+				response.setReason(Constants.KEY_NOT_FOUND);
+			} else {
+				dataAccess.addLog("session found");
+				response = validateAccessFromApi(session, reqUrl);
+			}
+		} catch (Exception e) {
+			dataAccess.addLog(e);
 		}
 		return response;
 

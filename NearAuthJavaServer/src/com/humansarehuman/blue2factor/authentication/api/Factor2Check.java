@@ -70,7 +70,7 @@ public class Factor2Check extends B2fApi {
 	public @ResponseBody ApiResponseWithToken browserCheckPost(@RequestBody JsRequest jsRequest,
 			HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) {
 		ApiResponseWithToken response;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		String encryptedSession = jsRequest.getEncryptedSession();
 		String token = jsRequest.getToken();
 		String requestType = jsRequest.getReqType();

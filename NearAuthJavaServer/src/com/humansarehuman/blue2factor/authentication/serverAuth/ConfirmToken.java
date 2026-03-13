@@ -3,6 +3,7 @@ package com.humansarehuman.blue2factor.authentication.serverAuth;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -23,6 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
  * 
  * 
  */
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
 @RequestMapping(Urls.CONFIRM_TOKEN)
 public class ConfirmToken extends B2fApi {

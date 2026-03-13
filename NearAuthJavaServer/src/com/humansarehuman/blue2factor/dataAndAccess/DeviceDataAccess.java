@@ -188,14 +188,19 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 	}
 
 	public RssiAndTime getRssiForPeripheral(DeviceDbObj device, DeviceConnectionDbObj conn) {
-		Integer rssi;
-		Timestamp ts;
+		Integer rssi = 0;
+		Timestamp ts = null;
 		Timestamp perfTs = conn.getPeripheralRssiTimestamp();
 		Timestamp centralTs = conn.getCentralRssiTimestamp();
-		if (centralTs.after(perfTs)) {
-			ts = centralTs;
-			rssi = conn.getCentralRssi();
-		} else {
+		if (centralTs != null ) {
+			if (perfTs == null || centralTs.after(perfTs)) {
+				ts = centralTs;
+				rssi = conn.getCentralRssi();
+			} else {
+				ts = perfTs;
+				rssi = conn.getPeripheralRssi();
+			}
+		} else if (perfTs != null) {
 			ts = perfTs;
 			rssi = conn.getPeripheralRssi();
 		}
@@ -2597,13 +2602,16 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		if (device != null) {
 			if (!device.isScreensaverOn()) {
 				if (isProximate(device, false)) {
+					addLog(device.getDeviceId(), "prox", LogConstants.TEMPORARILY_IMPORTANT);
 					connType = ConnectionType.PROX;
 					success = true;
 				} else {
+					addLog(device.getDeviceId(), "not prox", LogConstants.TEMPORARILY_IMPORTANT);
 					ConnectedAndConnectionType cct = didGiveAccess(device, deactivateFingerprint);
 					success = cct.isConnected();
 					connType = cct.getConnectionType();
 					if (!success) {
+						addLog(device.getDeviceId(), "did not give access", LogConstants.TEMPORARILY_IMPORTANT);
 						success = isBtConnectedWithRecentTransfer(device);
 						if (success) {
 							connType = ConnectionType.PROX;

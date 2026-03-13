@@ -102,7 +102,7 @@ public class Blue2Factor {
 			PrivateKey privateKey) {
 		B2fAuthResponse authResponse;
 		if (notEmpty(jwt)) {
-			OutcomeTokenAndUrl outcomeTokenAndUrl = b2fAuthorized(currentUrl, jwt, companyId, privateKey);
+			OutcomeTokenAndUrl outcomeTokenAndUrl = naAuthorized(currentUrl, jwt, companyId, privateKey);
 			if (outcomeTokenAndUrl.isSuccess()) {
 				authResponse = new B2fAuthResponse(true, outcomeTokenAndUrl.getToken(), null);
 			} else {
@@ -146,7 +146,7 @@ public class Blue2Factor {
 	 * @param privateKey
 	 * @return an outcome and new jwt if successful
 	 */
-	private OutcomeTokenAndUrl b2fAuthorized(String currentUrl, String jwt, String companyId, PrivateKey privateKey) {
+	private OutcomeTokenAndUrl naAuthorized(String currentUrl, String jwt, String companyId, PrivateKey privateKey) {
 		OutcomeTokenAndUrl outcomeTokenAndUrl;
 		try {
 			OutcomeAndUrl outcomeAndUrl = tokenIsValid(currentUrl, jwt, companyId, privateKey);

@@ -246,7 +246,7 @@ public class JsonWebToken {
 
 	public boolean validateJwt(String jwsString, boolean ignoreExpiration) {
 		boolean validated = false;
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 
 		Claims claims = decryptJwt(jwsString, dataAccess);
@@ -260,15 +260,21 @@ public class JsonWebToken {
 			dataAccess.addLog("tokenId: " + jwtTokenId, logLevel);
 			Date now = new Date();
 			if (ignoreExpiration || exp.after(now)) {
+				dataAccess.addLog("exp: " + exp, logLevel);
 				if (now.after(notBefore)) {
+					dataAccess.addLog("notBefore: " + notBefore, logLevel);
 					if (!TextUtils.isEmpty(jwtTokenId)) {
+						dataAccess.addLog("tokenId: " + jwtTokenId, logLevel);
 						CompanyDbObj company = dataAccess.getCompanyByTokenAndDescription(jwtTokenId,
 								TokenDescription.JWT, ignoreExpiration);
 						if (company != null) {
+							dataAccess.addLog("company found", logLevel);
 							if (issuer.equals(
 									Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", company.getApiKey()))) {
+								dataAccess.addLog("issuer: " + issuer, logLevel);
 								for (String audienceMember : audience) {
-									if (audienceMember.equals(company.getCompleteCompanyLoginUrl())) {
+									dataAccess.addLog("audienceMember: " + audienceMember, logLevel);
+									if (audienceMember.equals(company.getCompanyBaseUrl())) {
 										validated = true;
 										dataAccess.addLog("all claims were validated", logLevel);
 									}
@@ -280,7 +286,7 @@ public class JsonWebToken {
 										LogConstants.WARNING);
 							}
 						} else {
-							dataAccess.addLog(Constants.TOKEN_EXPIRED, LogConstants.WARNING);
+							dataAccess.addLog(Constants.COMPANY_NOT_FOUND, LogConstants.ERROR);
 						}
 					} else {
 						dataAccess.addLog(Constants.TOKEN_NOT_FOUND, LogConstants.WARNING);

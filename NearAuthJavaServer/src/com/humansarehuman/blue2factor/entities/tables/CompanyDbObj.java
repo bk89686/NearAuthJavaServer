@@ -194,6 +194,10 @@ public class CompanyDbObj {
 	public String getCompleteCompanyLoginUrl() {
 		return "https://" + companyBaseUrl + companyLoginUrl;
 	}
+	
+	public String getCompanyLoginWithoutProtocol() {
+		return companyBaseUrl + companyLoginUrl;
+	}
 
 	public void setCompanyLoginUrl(String companyLoginUrl) {
 		this.companyLoginUrl = companyLoginUrl;

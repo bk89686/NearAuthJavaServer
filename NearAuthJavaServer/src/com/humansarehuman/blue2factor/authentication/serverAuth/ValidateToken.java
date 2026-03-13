@@ -52,7 +52,7 @@ public class ValidateToken extends B2fApi {
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);
 		if (company != null) {
 			String jwt = getJwtFromAuthHeader(authHeader, dataAccess);
-			dataAccess.addLog("jwt: " + jwt, LogConstants.TRACE);
+			dataAccess.addLog("jwt: " + jwt, LogConstants.TEMPORARILY_IMPORTANT);
 			if (!TextUtils.isEmpty(jwt) && !jwt.equals("None")) {
 				response = validateWithJwt(request, httpResponse, jwt, company, dataAccess);
 				if (response.getReason().equals(Constants.NEEDS_SAML_VERIFICATION)) {
@@ -174,9 +174,9 @@ public class ValidateToken extends B2fApi {
 							JsonWebToken jwtBuilder = new JsonWebToken();
 							apiResponse = dataAccess.isAccessAllowedWithConnectionMethod(device, "validateWithJwt", false);
 							if (apiResponse.isAccessAllowed()) {
-								dataAccess.addLog("access was allowed");
+								dataAccess.addLog("access was allowed", LogConstants.TEMPORARILY_IMPORTANT);
 								if (!browser.isExpired()) {
-									dataAccess.addLog("browser was not expired", LogConstants.TRACE);
+									dataAccess.addLog("browser was not expired", LogConstants.TEMPORARILY_IMPORTANT);
 									String audience = company.getCompleteCompanyLoginUrl();
 									apiResponse.setToken(jwtBuilder.buildJwtForServer(idObj, audience));
 								} else {

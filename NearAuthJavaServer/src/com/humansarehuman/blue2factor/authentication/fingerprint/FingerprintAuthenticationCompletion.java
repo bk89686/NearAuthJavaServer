@@ -1,7 +1,6 @@
 package com.humansarehuman.blue2factor.authentication.fingerprint;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 

@@ -36,7 +36,7 @@ import com.humansarehuman.blue2factor.entities.tables.DeviceDbObj;
 
 public class GeneralUtilities {
 	private static String deviceName = null;
-	private static boolean localhostTesting = true;
+	private static boolean localhostTesting = false;
 
 	public static int estimateDistance(DeviceDbObj device, int rssi) {
 		Double interference = 2.35;
@@ -188,9 +188,26 @@ public class GeneralUtilities {
 				dataAccess.addLog("setResponseHeader", "Access-Control-Allow-Origin = *");
 			} else {
 				String formattedUrl = getUrlProtocolAndHost(reqUrl);
-				dataAccess.addLog("setResponseHeader", "formattedUrl: " + formattedUrl);
+				dataAccess.addLog("formattedUrl: " + formattedUrl, LogConstants.TEMPORARILY_IMPORTANT);
 				httpResponse.setHeader("Access-Control-Allow-Origin", formattedUrl);
 			}
+			httpResponse.setHeader("Access-Control-Max-Age", "600");
+		} catch (Exception e) {
+			dataAccess.addLog("setResponseHeader", e);
+		}
+		return httpResponse;
+	}
+	
+	public HttpServletResponse setResponseHeaderForOptions(HttpServletResponse httpResponse, String reqUrl) {
+		DataAccess dataAccess = new DataAccess();
+		try {
+			httpResponse.setContentType("application/json; charset=utf-8");
+			httpResponse.setHeader("Access-Control-Allow-Credentials", "true");
+			httpResponse.setHeader("Access-Control-Allow-Headers", "Content-Type");
+			httpResponse.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+			String formattedUrl = getUrlProtocolAndHost(reqUrl);
+			dataAccess.addLog("formattedUrl: " + formattedUrl, LogConstants.TEMPORARILY_IMPORTANT);
+			httpResponse.setHeader("Access-Control-Allow-Origin", formattedUrl);
 			httpResponse.setHeader("Access-Control-Max-Age", "600");
 		} catch (Exception e) {
 			dataAccess.addLog("setResponseHeader", e);
@@ -356,12 +373,16 @@ public class GeneralUtilities {
 	// like blue2factor.com from https://www.blue2factor.com
 	public static String getUrlProtocolAndHost(String url) {
 		String urlAndHost = null;
+		if (!url.startsWith("https://")) {
+			url = "https://" + url;
+		}
 		try {
+			new DataAccess().addLog("url: " + url, LogConstants.TEMPORARILY_IMPORTANT);
 			URI uri = new URI(url);
 			URL aURL = uri.toURL();
 			urlAndHost = aURL.getProtocol() + "://" + aURL.getHost();
 		} catch (MalformedURLException | URISyntaxException e) {
-			new DataAccess().addLog("bad url: " + url, LogConstants.WARNING);
+			new DataAccess().addLog("bad url: " + url, LogConstants.ERROR);
 		}
 		return urlAndHost;
 	}

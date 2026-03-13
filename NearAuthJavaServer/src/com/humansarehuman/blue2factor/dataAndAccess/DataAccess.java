@@ -4906,7 +4906,7 @@ public class DataAccess extends DeviceFields {
 			if (rs.next()) {
 				browser = this.recordToBrowser(rs);
 			} else {
-				this.addLog("record not found");
+				this.addLog("record not found", LogConstants.WARNING);
 			}
 		} catch (Exception e) {
 			addLog(e);

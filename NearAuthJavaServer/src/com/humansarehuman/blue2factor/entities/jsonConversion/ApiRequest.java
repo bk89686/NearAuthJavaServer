@@ -8,6 +8,8 @@ public class ApiRequest implements Serializable {
 	private String encryptedSession;
 	private String reqUrl;
 	private String token;
+	public ApiRequest() {} 
+	
 	public ApiRequest(String encryptedSession, String reqUrl, String token) {
 		super();
 		this.encryptedSession = encryptedSession;

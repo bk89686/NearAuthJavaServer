@@ -44,7 +44,8 @@ public class GetDeviceData extends B2fApi {
 
 	@RequestMapping(method = { RequestMethod.GET, RequestMethod.POST }, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getDeviceData(HttpServletRequest request, HttpServletResponse response, ModelMap model) {
-		dataAccess.addLog("getDeviceData entry", LogConstants.TEMPORARILY_IMPORTANT);
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		dataAccess.addLog("getDeviceData entry", logLevel);
 		int outcome = Outcomes.FAILURE;
 		String reason = "";
 		String redirect = "";
@@ -52,12 +53,15 @@ public class GetDeviceData extends B2fApi {
 		try {
 			TokenDbObj token = this.getPersistentTokenObj(request);
 			if (token != null) {
+				dataAccess.addLog("token found", logLevel);
 				CompanyDbObj company;
 				GroupDbObj displayGroup;
 				GroupDbObj myGroup = dataAccess.getActiveGroupFromToken(token);
 				if (myGroup != null) {
 					DeviceDbObj device = dataAccess.getDeviceByDeviceId(token.getDeviceId(), true, "getDeviceData");
+					dataAccess.addLog("devices found", logLevel);
 					if (device != null && dataAccess.isAccessAllowed(device)) {
+						dataAccess.addLog("accessAllowed", logLevel);
 						boolean admin = dataAccess.userIsAdmin(myGroup);
 						request.setAttribute("admin", admin);
 						String incomingGroupId = this.getRequestValue(request, "uid");

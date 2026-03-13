@@ -13,7 +13,7 @@ const LOG = 1;
 const INFO = 2;
 const WARN = 3;
 const ERROR = 4;
-const CONSOLE_LEVEL = INFO;
+const CONSOLE_LEVEL = WARN;
 const STORE_NAME = "b2fkeys";
 const DB_NAME = "blue2factor";
 var navigateAway = false;
@@ -254,13 +254,13 @@ async function handleValidateResponse(data){
     var success = false;
     var decryptedString;
     currentlyValidating = false;
-    cLog("factor2Check success: " + data.outcome, INFO);
+    cLog("factor2Check success: " + data.accessAllowed, INFO);
     if (data.token){
         decryptedString = await decryptToken(data.token);
     }
     if (decryptedString) {
         setAuthnCookie(data.reason);
-        if (SUCCESS === data.outcome) {
+        if (data.accessAllowed) {
             if (isSettingUp()) {
                 reloadWithoutParameters();
             }
@@ -295,7 +295,6 @@ function handleB2fFailure(reason){
             break;
         default:
             deleteCookie("B2F_AUTHN");
-			debugger;
             navigateTo(getEndpoint() + "/jsFailure?url=" + encodeURI(location.href) +
             "&tid=" + getBrowserSession());
     }
@@ -350,7 +349,7 @@ async function confirmToken(browserSession){
         if (data.outcome === SUCCESS) {
             setBrowserSession(browserSession);
         }
-        cLog("validate success: " + data.outcome, INFO);
+        cLog("validate success: " + data.outcome === 0, INFO);
         return data.outcome;
     }).catch(function (err) {
         return cLog("validate error: " + err, ERROR);

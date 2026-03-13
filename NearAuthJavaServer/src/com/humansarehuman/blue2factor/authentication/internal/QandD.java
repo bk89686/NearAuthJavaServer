@@ -1,8 +1,6 @@
 package com.humansarehuman.blue2factor.authentication.internal;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -81,7 +79,7 @@ public class QandD extends B2fApi {
 
 	@RequestMapping(method = RequestMethod.GET)
 	public String processGet(HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) {
-		int i = 0;
+//		int i = 0;
 //		CompanyDataAccess dataAccess = new CompanyDataAccess();
 //		ArrayList<CompanyDbObj> companies = dataAccess.getAllActiveCompanies();
 //		for (CompanyDbObj company : companies) {
