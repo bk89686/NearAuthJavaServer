@@ -34,7 +34,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.ui.ModelMap;
 
-import com.humansarehuman.blue2factor.Blue2Factor;
 import com.humansarehuman.blue2factor.communication.PushNotifications;
 import com.humansarehuman.blue2factor.communication.twilio.TextMessage;
 import com.humansarehuman.blue2factor.constants.Constants;
@@ -102,7 +101,6 @@ public abstract class BaseController {
 	protected final String myCompanyId = "MXJ9469AA88";
 	protected final PrivateKey pk = getClientPrivateKey();
 
-	protected Blue2Factor b2f = new Blue2Factor();
 
 	private PrivateKey getClientPrivateKey() {
 		PrivateKey pk = null;
@@ -1376,7 +1374,7 @@ public abstract class BaseController {
 
 		CompanyDbObj company = dataAccess.getCompanyById(group.getCompanyId());
 		if (company != null) {
-			String loginUrl = "https://" + company.getCompleteCompanyLoginUrl();
+			String loginUrl = company.getCompleteCompanyLoginUrl();
 			model.addAttribute("loginUrl", loginUrl);
 			model = getLicenseAttributes(dataAccess, model, group, company);
 			model.addAttribute("userRole", group.getUserType().toString());

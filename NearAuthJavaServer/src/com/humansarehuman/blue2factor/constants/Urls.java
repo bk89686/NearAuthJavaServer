@@ -144,12 +144,12 @@ public class Urls {
 	public final static String LDAP_SUBMIT = "/SAML2/SSO/{apiKey}/ldapSubmit";
 	public final static String SAML_ENTITY_ID = "/SAML2/SSO/{apiKey}/EntityId";
 	public final static String SAML_CLIENT_ENTITY_ID = "/SAML2/SSO/{apiKey}/ClientEntityId";
-	public final static String SAML_IDP_METADATA = "/SAML2/SSO/{apiKey}/blue2factorIdpMetadata";
+	public final static String SAML_IDP_METADATA = "/SAML2/SSO/{apiKey}/nearAuthIdpMetadata";
 	public final static String SAML_SIGN_IN = "/SAML2/SSO/{apiKey}/samlSignin";
 	public final static String COMPANY_VALIDATE = "/SAML2/SSO/{apiKey}/validate";
 	public final static String SAML_RESPONSE_FROM_IDENTITY_PROVIDER = "/SAML2/SSO/{apiKey}/fromIdp";
 	public final static String SAML_SIGNOUT = "/SAML2/SSO/{apiKey}/Signout";
-	public final static String SAML_SP_METADATA = "/SAML2/SSO/{apiKey}/blue2factorSpMetadata";
+	public final static String SAML_SP_METADATA = "/SAML2/SSO/{apiKey}/nearAuthSpMetadata";
 	public final static String SAML_NEW_JWT = "/SAML2/SSO/newToken";
 	public final static String SAML_REDIRECT = "/SAML2/SSO/{apiKey}/Redirect";
 	public final static String SIGN_OUT = "/f1Signout";

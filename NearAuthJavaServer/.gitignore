@@ -32,6 +32,7 @@ pom.xml.next
 pom.xml.bak
 pom.xml.releaseBackup
 release.properties
+.m2/
 
 # Gradle-specific files
 .gradle/

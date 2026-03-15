@@ -16,6 +16,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${compiler-plugin.version}</version>
 				<configuration>
+					<parameters>true</parameters>
 					<source>${jdk.version}</source>
 					<target>${jdk.version}</target>
 				</configuration>
@@ -59,6 +60,12 @@
 		      </plugin>
 		</plugins>
 	</build>
+	<distributionManagement>
+	    <repository>
+	        <id>github</id>
+	        <url>https://maven.pkg.github.com/nearauth-ai/nearauthjavaclient</url>
+	    </repository>
+	</distributionManagement>
 	<repositories>
 		<repository>
 			<id>shibboleth</id>
@@ -67,6 +74,14 @@
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
+		<repository>
+	        <id>github</id>
+	        <name>GitHub NearAuth.ai Apache Maven Packages</name>
+	        <url>https://maven.pkg.github.com/nearauth-ai/nearauthjavaclient</url>
+	        <snapshots>
+	            <enabled>true</enabled>
+	        </snapshots>
+	    </repository>
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -110,11 +125,6 @@
 			<artifactId>commons-io</artifactId>
 			<version>${commons-io.version}</version>
 		</dependency>
-		<!--<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>${apache-commons.version}</version>
-		</dependency>-->
 		<dependency>
 			<groupId>org.springframework.session</groupId>
 			<artifactId>spring-session-jdbc</artifactId>
@@ -162,18 +172,17 @@
 			<artifactId>jakarta.mail-api</artifactId>
 			<version>${jakarta-mail-api.version}</version>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 		    <groupId>jakarta.servlet</groupId>
 		    <artifactId>jakarta.servlet-api</artifactId>
 		    <version>${jakarta-servlet-api.version}</version>
 		    <scope>provided</scope>
-    	</dependency>
+    	</dependency>-->
 		<dependency>
 		    <groupId>jakarta.servlet.jsp.jstl</groupId>
 		    <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
 		    <version>${jakarta.servlet.jsp.jstl-api.version}</version>
 		</dependency>
-		<!-- JSTL Implementation -->
 		<dependency>
 		    <groupId>org.glassfish.web</groupId>
 		    <artifactId>jakarta.servlet.jsp.jstl</artifactId>
@@ -194,11 +203,6 @@
 			<artifactId>webauthn4j-test</artifactId>
 			<version>${webauthn4j.version}</version>
 		</dependency>
-		<!--<dependency>
-			<groupId>org.opensaml</groupId>
-			<artifactId>opensaml-core</artifactId>
-			<version>${opensaml.version}</version>
-		</dependency>-->
 		<dependency>
 			<groupId>org.opensaml</groupId>
 			<artifactId>opensaml-saml-api</artifactId>
@@ -209,12 +213,6 @@
 			<artifactId>opensaml-saml-impl</artifactId>
 			<version>${opensaml.version}</version>
 		</dependency>
-		<!--<dependency>
-			<groupId>org.opensaml</groupId>
-			<artifactId>opensaml-messaging-api</artifactId>
-			<version>${opensaml.version}</version>
-			<scope>compile</scope>
-		</dependency>-->
 		<dependency>
 			<groupId>com.nimbusds</groupId>
 			<artifactId>nimbus-jose-jwt</artifactId>
@@ -290,7 +288,12 @@
 			<artifactId>guava</artifactId>
 			<version>${guava.version}</version>
 		</dependency>
-		
+		<dependency>
+		  	<groupId>ai.nearauth.authentication</groupId>
+		  	<artifactId>java-nearauth</artifactId>
+		  	<version>1.0.5-SNAPSHOT</version>
+		</dependency>
+			
 	</dependencies>
 	<!-- Environment Settings -->
 	<properties>
