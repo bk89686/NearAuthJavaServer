@@ -152,6 +152,7 @@ public class B2fApi extends BaseController {
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		String reason = "";
 		int outcome = Outcomes.FAILURE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		TokenDbObj oldToken = null;
 		String token = "";
 		try {
@@ -162,13 +163,13 @@ public class B2fApi extends BaseController {
 				device = dataAccess.getDeviceByDeviceId(oldToken.getDeviceId(), "validateAccess");
 				if (device != null && device.isActive()) {
 					if (device.getSignedIn()) {
-						dataAccess.addLog("device is signed in");
+						dataAccess.addLog("device is signed in", logLevel);
 						CompanyDbObj company = dataAccess.getCompanyByDevId(device.getDeviceId());
 						BrowserDbObj browser = dataAccess.getBrowserByToken(session, TokenDescription.BROWSER_SESSION);
 						if (company != null) {
 							if (browser != null) {
 								if (!browser.isExpired()) {
-									dataAccess.addLog("browser looks good");
+									dataAccess.addLog("browser looks good", logLevel);
 									IdentityObjectFromServer idObj = new IdentityObjectFromServer(browser, true);
 									baseUrl = company.getCompanyBaseUrl();
 									if (dataAccess.isAccessAllowed(device, "validateAccess")) {
@@ -178,7 +179,7 @@ public class B2fApi extends BaseController {
 										reason = resp.getReason();
 										token = resp.getToken();
 									} else {
-										dataAccess.addLog("access is not allowed");
+										dataAccess.addLog("access is not allowed", logLevel);
 										reason = Constants.NOT_PERMITTED;
 										token = new JsonWebToken().buildExpiredJwt(idObj, url);
 									}
@@ -205,7 +206,7 @@ public class B2fApi extends BaseController {
 			reason = e.getLocalizedMessage();
 			outcome = ERROR;
 		}
-		dataAccess.addLog("tokenStr: " + token + ", reason: " + reason);
+		dataAccess.addLog("tokenStr: " + token + ", reason: " + reason, logLevel);
 		return new ApiResponseWithToken(outcome, reason, token);
 	}
 	
@@ -387,6 +388,14 @@ public class B2fApi extends BaseController {
 		}
 		return entityId;
 	}
+	
+	protected String getAudience(CompanyDbObj company, String siteUrl, CompanyDataAccess dataAccess) {
+		String audience = null;
+		if (dataAccess.urlMatchesCompany(company, siteUrl)) {
+			audience = company.getCompleteCompanyLoginUrl();
+		}
+		return audience;
+	}
 
 	protected IdentityObjectFromServer getIdObj(String authToken, CompanyDataAccess dataAccess) {
 		IdentityObjectFromServer idObj = null;
@@ -555,7 +564,7 @@ public class B2fApi extends BaseController {
 		return hasBiometrics;
 	}
 
-	protected UrlAndModel reSetup(ModelMap model, IdentityObjectFromServer idObj, CompanyDataAccess dataAccess) {
+	protected UrlAndModel reSetup(ModelMap model, IdentityObjectFromServer idObj, String referrerUrl, CompanyDataAccess dataAccess) {
 		String browserId = idObj.getBrowser().getBrowserId();
 		TokenDbObj session = dataAccess.addToken(idObj.getDevice(), browserId, TokenDescription.BROWSER_SESSION,
 				baseUrl);
@@ -569,7 +578,11 @@ public class B2fApi extends BaseController {
 				idObj.getCompany().getCompleteCompanyLoginUrl());
 		dataAccess.addLog("jwt: " + jwt);
 		model.addAttribute("jwt", jwt);
-		model.addAttribute("submitUrl", idObj.getCompany().getCompleteCompanyLoginUrl());
+		if (!TextUtils.isBlank(referrerUrl)) {
+			model.addAttribute("submitUrl", referrerUrl);
+		} else {
+			model.addAttribute("submitUrl", idObj.getCompany().getCompleteCompanyLoginUrl());
+		}
 		String nextPage = "resetJwt";
 		return new UrlAndModel(nextPage, model);
 	}
@@ -708,7 +721,7 @@ public class B2fApi extends BaseController {
 		httpRedirectDeflateEncoder.setMessageContext(messageContext);
 
 		dataAccess.addLog("sending to: " + redirectLoc + " with relayState: " + relayState + " and issuer: "
-				+ samlRequest.getIssuer(), LogConstants.TEMPORARILY_IMPORTANT);
+				+ samlRequest.getIssuer(), LogConstants.TRACE);
 
 		httpResponse.setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
 		httpRedirectDeflateEncoder.setHttpServletResponseSupplier(() -> httpResponse);

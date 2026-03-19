@@ -19,15 +19,15 @@ import com.humansarehuman.blue2factor.entities.tables.CompanyDbObj;
 import com.humansarehuman.blue2factor.utilities.Encryption;
 
 @Controller
-@RequestMapping(Urls.SAML_CLIENT_ENTITY_ID)
+@RequestMapping(Urls.SAML_CLIENT_AUDIENCE)
 @SuppressWarnings("ucd")
-public class GetClientEntityId extends SamlAndLdapResponse {
+public class GetClientAudience extends SamlAndLdapResponse {
 
 	@RequestMapping(method = { RequestMethod.GET, RequestMethod.POST })
 	public String samlResponseFromAuthnRequest(HttpServletRequest request, HttpServletResponse httpResponse,
 			ModelMap model, @PathVariable("apiKey") String apiKey) {
 		int outcome = Outcomes.FAILURE;
-		String entityId = "";
+		String audience = "";
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);
 
@@ -37,22 +37,22 @@ public class GetClientEntityId extends SamlAndLdapResponse {
 		if (company != null) {
 			Encryption encryption = new Encryption();
 			if (encryption.verifyWebServerSignature(company, plainText, signature)) {
-				entityId = doesUrlMatchRegex(company, siteUrl, dataAccess);
-				if (entityId == null) {
+				audience = getAudience(company, siteUrl, dataAccess);
+				if (audience == null) {
 					dataAccess.addLog("url didn't match", LogConstants.WARNING);
-					entityId = "regEx comparison failed";
+					audience = "regEx comparison failed";
 				} else {
 					outcome = Outcomes.SUCCESS;
 				}
 			} else {
-				entityId = "signature not verified";
+				audience = "signature not verified";
 				dataAccess.addLog("signature failed", LogConstants.WARNING);
 			}
 		} else {
-			entityId = "company not found";
-			dataAccess.addLog(entityId, LogConstants.WARNING);
+			audience = "company not found";
+			dataAccess.addLog(audience, LogConstants.WARNING);
 		}
-		BasicResponse response = new BasicResponse(outcome, entityId);
+		BasicResponse response = new BasicResponse(outcome, audience);
 		model = this.addBasicResponse(model, response);
 		return "result";
 	}

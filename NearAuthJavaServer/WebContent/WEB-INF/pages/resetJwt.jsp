@@ -16,10 +16,10 @@
     <form id='setupForm' method='POST' action='${submitUrl}'>
         <input type='hidden' id='B2F_AUTHN' name='B2F_AUTHN' value='${jwt}'>
         <input type='hidden' id='b2fSetup' name='b2fSetup' value='${b2fSetup}'>
+        <input type='hidden' id='nAdid' name='nAdid' value='${nAdid}'>
     </form>
     <div id='central' style='display:none;'>${central}</div>
     <script>
-        //alert("sending setup " + ${b2fSetup} + " to " + ${submitUrl});
         document.getElementById("setupForm").submit();
     </script>
 </body>

@@ -237,6 +237,6 @@
 		}
     </script>
     <script src="/js/b2f_device_data_search_1.0.0.19.js"></script>
-    <%@ include file="footer.jsp" %>
+    <%@ include file="footerClient.jsp" %>
 </body>
 </html>

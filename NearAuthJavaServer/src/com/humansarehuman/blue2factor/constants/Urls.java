@@ -42,7 +42,7 @@ public class Urls {
 	public final static String DOCUMENTATION = "/documentation";
 	public final static String EXPIRE_TOKEN_FOR_CENTRAL = "/sbkgbuahkthnb";
 	public final static String FAILSAFE = "/failsafe";
-	public final static String FAILURE_AND_SETUP = "/SAML2/SSO/{apiKey}/b2f-res";
+//	public final static String FAILURE_AND_SETUP = "/SAML2/SSO/{apiKey}/b2f-res";
 	public final static String FCM_UPDATE = "/fcmUpdate";
 	public final static String GET_ADMIN_CODES = "/getAdminCodes";
 	public final static String GET_NOTIFICATION = "/sauhatmuaseh";
@@ -144,6 +144,7 @@ public class Urls {
 	public final static String LDAP_SUBMIT = "/SAML2/SSO/{apiKey}/ldapSubmit";
 	public final static String SAML_ENTITY_ID = "/SAML2/SSO/{apiKey}/EntityId";
 	public final static String SAML_CLIENT_ENTITY_ID = "/SAML2/SSO/{apiKey}/ClientEntityId";
+	public final static String SAML_CLIENT_AUDIENCE = "/SAML2/SSO/{apiKey}/ClientAudience";
 	public final static String SAML_IDP_METADATA = "/SAML2/SSO/{apiKey}/nearAuthIdpMetadata";
 	public final static String SAML_SIGN_IN = "/SAML2/SSO/{apiKey}/samlSignin";
 	public final static String COMPANY_VALIDATE = "/SAML2/SSO/{apiKey}/validate";

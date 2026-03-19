@@ -188,7 +188,7 @@ public class GeneralUtilities {
 				dataAccess.addLog("setResponseHeader", "Access-Control-Allow-Origin = *");
 			} else {
 				String formattedUrl = getUrlProtocolAndHost(reqUrl);
-				dataAccess.addLog("formattedUrl: " + formattedUrl, LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog("formattedUrl: " + formattedUrl, LogConstants.TRACE);
 				httpResponse.setHeader("Access-Control-Allow-Origin", formattedUrl);
 			}
 			httpResponse.setHeader("Access-Control-Max-Age", "600");
@@ -206,7 +206,7 @@ public class GeneralUtilities {
 			httpResponse.setHeader("Access-Control-Allow-Headers", "Content-Type");
 			httpResponse.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
 			String formattedUrl = getUrlProtocolAndHost(reqUrl);
-			dataAccess.addLog("formattedUrl: " + formattedUrl, LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("formattedUrl: " + formattedUrl, LogConstants.TRACE);
 			httpResponse.setHeader("Access-Control-Allow-Origin", formattedUrl);
 			httpResponse.setHeader("Access-Control-Max-Age", "600");
 		} catch (Exception e) {
@@ -370,14 +370,14 @@ public class GeneralUtilities {
 		return nakedDomain;
 	}
 
-	// like blue2factor.com from https://www.blue2factor.com
+	// like  https://www.blue2factor.com from blue2factor.com
 	public static String getUrlProtocolAndHost(String url) {
 		String urlAndHost = null;
 		if (!url.startsWith("https://")) {
 			url = "https://" + url;
 		}
 		try {
-			new DataAccess().addLog("url: " + url, LogConstants.TEMPORARILY_IMPORTANT);
+			new DataAccess().addLog("url: " + url, LogConstants.TRACE);
 			URI uri = new URI(url);
 			URL aURL = uri.toURL();
 			urlAndHost = aURL.getProtocol() + "://" + aURL.getHost();

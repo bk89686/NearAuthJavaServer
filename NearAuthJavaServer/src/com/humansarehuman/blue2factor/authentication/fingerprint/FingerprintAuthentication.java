@@ -56,7 +56,9 @@ public class FingerprintAuthentication extends B2fApi {
 	public @ResponseBody FingerprintRegistrationResponse fingerprintAuthenticationGet(HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		GeneralUtilities generalUtilities = new GeneralUtilities();
-		Rp rp = new Rp("", "", Urls.ICON_PATH);
+		String origin = request.getHeader("Origin");
+		String nakedDomain = GeneralUtilities.getNakedDomain(origin);
+		Rp rp = new Rp(nakedDomain, nakedDomain, Urls.ICON_PATH);
 		User user = new User("", "", "");
 		PubKeyCredParam[] pubKeyCredParams = new PubKeyCredParam[0];
 		response = generalUtilities.setResponseHeader(response, request.getHeader("Origin"));

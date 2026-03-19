@@ -309,7 +309,8 @@ public class Internet {
 			String jsonStr = json.toString();
 
 			dataAccess.addLog("sendProxCheck", jsonStr, LogConstants.INFO);
-			URL url = new URL(sUrl + "?_=" + System.currentTimeMillis());
+			URI uri = new URI(sUrl + "?_=" + System.currentTimeMillis());
+			URL url = uri.toURL();
 			conn = (HttpsURLConnection) url.openConnection();
 			conn.setConnectTimeout(25000);
 			conn.setRequestProperty("Cache-Control", "no-cache");

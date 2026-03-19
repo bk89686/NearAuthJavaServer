@@ -42,7 +42,7 @@ public class VerifyAccessAllowed extends B2fApi {
 			HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) {
 		AccessAllowedWithAccessType response = null;
 		SamlDataAccess dataAccess = new SamlDataAccess();
-		dataAccess.addLog("accessAllowed start", LogConstants.TEMPORARILY_IMPORTANT);
+		dataAccess.addLog("accessAllowed start", LogConstants.TRACE);
 		try {
 			String reqUrl = GeneralUtilities.getUrlHost(apiRequest.getReqUrl());
 			Encryption encryption = new Encryption();

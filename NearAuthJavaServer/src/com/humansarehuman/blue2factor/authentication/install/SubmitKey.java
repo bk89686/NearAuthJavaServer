@@ -52,7 +52,7 @@ public class SubmitKey extends BaseController {
 		try {
 			if (device != null && postNearAuth) {
 				String publicKey = this.getRequestValue(request, "eausnht");
-				dataAccess.addLog(devId, "device found for updating key to: " + publicKey, LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog(devId, "device found for updating key to: " + publicKey, LogConstants.TRACE);
 				if (!TextUtils.isBlank(publicKey)) {
 					if (sshKey) {
 						String outgoingKey = addSshPublicKeyAndGetPublicKey(device, publicKey, dataAccess);

@@ -34,6 +34,7 @@ import com.humansarehuman.blue2factor.constants.Outcomes;
 import com.humansarehuman.blue2factor.constants.Urls;
 import com.humansarehuman.blue2factor.dataAndAccess.CompanyDataAccess;
 import com.humansarehuman.blue2factor.entities.enums.ConnectionType;
+import com.humansarehuman.blue2factor.entities.enums.TokenDescription;
 import com.humansarehuman.blue2factor.entities.jsonConversion.apiResponse.DeviceDataOneDevice;
 import com.humansarehuman.blue2factor.entities.jsonConversion.apiResponse.DeviceDataOneDeviceApiResponse;
 import com.humansarehuman.blue2factor.entities.tables.CompanyDbObj;
@@ -43,6 +44,8 @@ import com.humansarehuman.blue2factor.entities.tables.DeviceDbObj;
 import com.humansarehuman.blue2factor.entities.tables.GroupDbObj;
 import com.humansarehuman.blue2factor.entities.tables.TokenDbObj;
 import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
+
+import ai.nearauth.authentication.NearAuthAi;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
@@ -73,6 +76,10 @@ public class GetDeviceDataOneDevice extends B2fApi {
 	public String postDeviceDataOneDevice(HttpServletRequest request, HttpServletResponse httpResponse,
 			ModelMap model) {
 		boolean success = false;
+		NearAuthAi nearAuth = new NearAuthAi();
+		if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
+            return "couldNotConfirm";
+        }
 		String newName = this.getRequestValue(request, "popupInput1");
 		String deviceId = this.getRequestValue(request, "did");
 		dataAccess.addLog("deviceId:" + deviceId + ", newName: " + newName, LogConstants.IMPORTANT);
@@ -92,7 +99,12 @@ public class GetDeviceDataOneDevice extends B2fApi {
 			}
 		}
 		if (success) {
-			model = this.showPage(request, model, device);
+			TokenDbObj token = this.getPersistentTokenObj(request);
+			if (token == null) {
+				String browserId = nearAuth.getBrowserId();
+				token = dataAccess.getActiveTokenByOrDescriptionAndTokenId(TokenDescription.BROWSER_TOKEN, browserId);
+			}
+			model = this.showPage(request, model, device, token);
 		} else {
 			DeviceDataOneDeviceApiResponse deviceData = new DeviceDataOneDeviceApiResponse(deviceId);
 			deviceData.setOutcome(Outcomes.FAILURE);
@@ -105,10 +117,19 @@ public class GetDeviceDataOneDevice extends B2fApi {
 
 	@RequestMapping(method = RequestMethod.GET)
 	public String getDeviceDataOneDevice(HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) {
+		NearAuthAi nearAuth = new NearAuthAi();
+		if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
+            return nearAuth.redirectToFailure();
+        }
 		String deviceId = this.getRequestValue(request, "did");
 		DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId);
 		if (device != null) {
-			model = this.showPage(request, model, device);
+			TokenDbObj token = this.getPersistentTokenObj(request);
+			if (token == null) {
+				String browserId = nearAuth.getBrowserId();
+				token = dataAccess.getActiveTokenByOrDescriptionAndTokenId(TokenDescription.BROWSER_TOKEN, browserId);
+			}
+			model = this.showPage(request, model, device, token);
 		} else {
 			DeviceDataOneDeviceApiResponse deviceData = new DeviceDataOneDeviceApiResponse(deviceId);
 			deviceData.setOutcome(Outcomes.FAILURE);
@@ -119,8 +140,8 @@ public class GetDeviceDataOneDevice extends B2fApi {
 		return "deviceTimeline";
 	}
 
-	private ModelMap showPage(HttpServletRequest request, ModelMap model, DeviceDbObj device) {
-		TokenDbObj token = this.getPersistentTokenObj(request);
+	private ModelMap showPage(HttpServletRequest request, ModelMap model, DeviceDbObj device, TokenDbObj token) {
+
 		TimeTracker timeTracker = new TimeTracker();
 		String reason = "";
 		try {

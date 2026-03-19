@@ -99,20 +99,20 @@ public abstract class BaseController {
 	public String baseUrl = "";
 
 	protected final String myCompanyId = "MXJ9469AA88";
-	protected final PrivateKey pk = getClientPrivateKey();
 
 
-	private PrivateKey getClientPrivateKey() {
+	protected PrivateKey getClientPrivateKey() {
 		PrivateKey pk = null;
 		try {
 			InputStream propFile = getClass().getResourceAsStream("/application.properties");
 			if (propFile != null) {
 				Properties prop = new Properties();
 				prop.load(propFile);
-				String pkStr = prop.getProperty("client.private.key");
+				String pkStr = prop.getProperty("client.private.key.pkcs8");
 				if (pkStr != null) {
 					Encryption encryption = new Encryption();
 					pk = encryption.stringToPrivateKey(pkStr);
+//					pk = Encryption.pemEncodedStringToPrivateKey(pkStr);
 				}
 			}
 		} catch (Exception e) {
@@ -559,7 +559,7 @@ public abstract class BaseController {
 		String deviceId = device.getDeviceId();
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		// dataAccess.deactivateOldKeysByTypeAndDevice(keyType, deviceId);
-		dataAccess.addLog(deviceId, "public key text: " + publicKey, LogConstants.TEMPORARILY_IMPORTANT);
+		dataAccess.addLog(deviceId, "public key text: " + publicKey, LogConstants.TRACE);
 		CompanyDbObj company = dataAccess.getCompanyByDevId(deviceId);
 		if (company != null) {
 			KeyDbObj key = new KeyDbObj(deviceId, null, device.getGroupId(), company.getCompanyId(), keyType, publicKey,
@@ -762,14 +762,14 @@ public abstract class BaseController {
 	protected AdminSignin validateAdminByCookie(HttpServletRequest request, HttpServletResponse response) {
 		String gid = getMainGroupCookie(request);
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
-		dataAccess.addLog("token= '" + gid + "'", LogConstants.TEMPORARILY_IMPORTANT);
+		dataAccess.addLog("token= '" + gid + "'", LogConstants.TRACE);
 
 		TokenDbObj token = dataAccess.getToken(gid);
 		String reason = "";
 		AdminSignin adminSignin = null;
 
 		if (token != null) {
-			dataAccess.addLog("token= found", LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("token= found", LogConstants.TRACE);
 			if (token.getPermission() % 2 == 1) {
 				if (token.getExpireTime().after(DateTimeUtilities.getCurrentTimestamp())) {
 					GroupDbObj group = dataAccess.getGroupByToken(gid);
@@ -805,7 +805,7 @@ public abstract class BaseController {
 		if (group != null) {
 
 			adminSignin = isGroupAllowed(group, response);
-			dataAccess.addLog("group was Found", LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("group was Found", LogConstants.TRACE);
 		} else {
 			dataAccess.addLog("group was null", LogConstants.WARNING);
 			adminSignin = new AdminSignin(null, group, false, false, false, Constants.INCORRECT_CREDS, false, response);
@@ -1170,7 +1170,7 @@ public abstract class BaseController {
 									centralDevice.getUserId(), clientIpAddress, ssid, null, null, false, false,
 									Outcomes.INCOMPLETE, DateTimeUtilities.getCurrentTimestamp(), null, false,
 									checkType, centralInstanceIdPair[0], peripheralInstanceIdPair[0]);
-							dataAccess.addLog(centralDevice.getDeviceId(), "added Check", LogConstants.TEMPORARILY_IMPORTANT);
+							dataAccess.addLog(centralDevice.getDeviceId(), "added Check", LogConstants.TRACE);
 							dataAccess.addCheck(check);
 						} else {
 							dataAccess.addLog("check not added because Ble was not available for connection",
@@ -1312,7 +1312,7 @@ public abstract class BaseController {
 		boolean admin = false;
 		boolean foundLocally = false;
 		boolean allowed = false;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		String reason = "";
 		CompanyDbObj company = null;
 		company = dataAccess.getCompanyByGroupId(group.getGroupId());
@@ -1591,7 +1591,7 @@ public abstract class BaseController {
 	protected HttpServletResponse setCookie(HttpServletResponse httpResponse, String value, String cookieName,
 			int seconds, boolean httpOnly, String sameSite) {
 		new DataAccess().addLog("setting sameSite for: " + cookieName + " to: " + sameSite + 
-				", httpOnly: " + httpOnly + ", to value: " + value, LogConstants.TEMPORARILY_IMPORTANT);
+				", httpOnly: " + httpOnly + ", to value: " + value, LogConstants.TRACE);
 		final ResponseCookie responseCookie = ResponseCookie.from(cookieName, value).secure(true).httpOnly(httpOnly)
 				.path("/").maxAge(seconds).sameSite(sameSite).domain(".nearAuth.ai").build();
 		httpResponse.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());

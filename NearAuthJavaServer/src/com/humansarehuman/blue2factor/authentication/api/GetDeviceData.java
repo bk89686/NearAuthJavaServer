@@ -24,6 +24,7 @@ import com.humansarehuman.blue2factor.entities.AccessAllowedWithAccessType;
 import com.humansarehuman.blue2factor.entities.OtherUserData;
 import com.humansarehuman.blue2factor.entities.RssiAndTime;
 import com.humansarehuman.blue2factor.entities.enums.ConnectionType;
+import com.humansarehuman.blue2factor.entities.enums.TokenDescription;
 import com.humansarehuman.blue2factor.entities.jsonConversion.apiResponse.DeviceData;
 import com.humansarehuman.blue2factor.entities.jsonConversion.apiResponse.UsersDataApiResponse;
 import com.humansarehuman.blue2factor.entities.tables.CompanyDbObj;
@@ -34,6 +35,8 @@ import com.humansarehuman.blue2factor.entities.tables.TokenDbObj;
 import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
 import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 
+import ai.nearauth.authentication.NearAuthAi;
+
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
 @RequestMapping(value = Urls.DEVICE_DATA)
@@ -41,10 +44,18 @@ import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 public class GetDeviceData extends B2fApi {
 
 	CompanyDataAccess dataAccess = new CompanyDataAccess();
+	
+	final String myCompanyId = "MXJ9469AA88";
+	final String failureUrl = "";
+    
 
 	@RequestMapping(method = { RequestMethod.GET, RequestMethod.POST }, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getDeviceData(HttpServletRequest request, HttpServletResponse response, ModelMap model) {
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		NearAuthAi nearAuth = new NearAuthAi();
+		if (!nearAuth.authenticateAndSecure(request, response, myCompanyId, getClientPrivateKey())) {
+            return nearAuth.redirectToFailure();
+        }
+		int logLevel = LogConstants.TRACE;
 		dataAccess.addLog("getDeviceData entry", logLevel);
 		int outcome = Outcomes.FAILURE;
 		String reason = "";
@@ -52,42 +63,37 @@ public class GetDeviceData extends B2fApi {
 		UsersDataApiResponse responseData = new UsersDataApiResponse();
 		try {
 			TokenDbObj token = this.getPersistentTokenObj(request);
+			if (token == null) {
+				String browserId = nearAuth.getBrowserId();
+				token = dataAccess.getActiveTokenByOrDescriptionAndTokenId(TokenDescription.BROWSER_TOKEN, browserId);
+			}
 			if (token != null) {
 				dataAccess.addLog("token found", logLevel);
 				CompanyDbObj company;
 				GroupDbObj displayGroup;
 				GroupDbObj myGroup = dataAccess.getActiveGroupFromToken(token);
 				if (myGroup != null) {
-					DeviceDbObj device = dataAccess.getDeviceByDeviceId(token.getDeviceId(), true, "getDeviceData");
-					dataAccess.addLog("devices found", logLevel);
-					if (device != null && dataAccess.isAccessAllowed(device)) {
-						dataAccess.addLog("accessAllowed", logLevel);
-						boolean admin = dataAccess.userIsAdmin(myGroup);
-						request.setAttribute("admin", admin);
-						String incomingGroupId = this.getRequestValue(request, "uid");
-						if (!incomingGroupId.equals("")) {
-							displayGroup = dataAccess.getActiveGroupById(incomingGroupId);
-							if (!userHasAccess(myGroup, displayGroup, admin)) {
-								displayGroup = myGroup;
-							}
-						} else {
+					dataAccess.addLog("accessAllowed", logLevel);
+					boolean admin = dataAccess.userIsAdmin(myGroup);
+					request.setAttribute("admin", admin);
+					String incomingGroupId = this.getRequestValue(request, "uid");
+					if (!incomingGroupId.equals("")) {
+						displayGroup = dataAccess.getActiveGroupById(incomingGroupId);
+						if (!userHasAccess(myGroup, displayGroup, admin)) {
 							displayGroup = myGroup;
 						}
-						if (admin) {
-							ArrayList<OtherUserData> otherUsers = getOtherUsersData(myGroup, displayGroup);
-							request.setAttribute("otherUsersData", otherUsers);
-							request.setAttribute("otherUserCount", otherUsers.size());
-						}
-						company = dataAccess.getCompanyById(displayGroup.getCompanyId());
-						responseData.setCompanyName(company.getCompanyName());
-						responseData = this.getOneUsersDevices(request, responseData, company, displayGroup);
-						outcome = Outcomes.SUCCESS;
 					} else {
-						company = dataAccess.getCompanyById(myGroup.getCompanyId());
-						reason = Constants.DEVICE_NOT_CONNECTED;
-
-						redirect = Urls.getSecureUrl() + "/failure/" + myGroup.getCompanyId() + "/reset";
+						displayGroup = myGroup;
 					}
+					if (admin) {
+						ArrayList<OtherUserData> otherUsers = getOtherUsersData(myGroup, displayGroup);
+						request.setAttribute("otherUsersData", otherUsers);
+						request.setAttribute("otherUserCount", otherUsers.size());
+					}
+					company = dataAccess.getCompanyById(displayGroup.getCompanyId());
+					responseData.setCompanyName(company.getCompanyName());
+					responseData = this.getOneUsersDevices(request, responseData, company, displayGroup);
+					outcome = Outcomes.SUCCESS;
 				} else {
 					reason = Constants.GROUP_NOT_FOUND;
 				}
@@ -193,16 +199,17 @@ public class GetDeviceData extends B2fApi {
 
 	private AccessAllowedWithAccessType setCentralAccessData(AccessAllowedWithAccessType accessData,
 			DeviceDbObj device) {
-		ArrayList<DeviceConnectionDbObj> connections = dataAccess.getConnectionsForCentral(device);
-		DeviceDbObj perf;
-		boolean perfAllowed = false;
-		for (DeviceConnectionDbObj conn : connections) {
-			perf = dataAccess.getDeviceByDeviceId(conn.getPeripheralDeviceId());
-			if (dataAccess.isAccessAllowed(perf)) {
-				perfAllowed = true;
-				break;
-			}
-		}
+//		ArrayList<DeviceConnectionDbObj> connections = dataAccess.getConnectionsForCentral(device);
+//		DeviceDbObj perf;
+//		boolean perfAllowed = false;
+		boolean perfAllowed = true;
+//		for (DeviceConnectionDbObj conn : connections) {
+//			perf = dataAccess.getDeviceByDeviceId(conn.getPeripheralDeviceId());
+////			if (dataAccess.isAccessAllowed(perf)) {
+////				perfAllowed = true;
+////				break;
+////			}
+//		}
 		accessData.setAccessAllowed(perfAllowed);
 		return accessData;
 	}
@@ -232,6 +239,7 @@ public class GetDeviceData extends B2fApi {
 		}
 		return new ConnectionInfo(connectionId, serviceUuid, rssiAndTime, rssi, rssiTimestamp);
 	}
+
 
 	class ConnectionInfo {
 		private String connectionId;

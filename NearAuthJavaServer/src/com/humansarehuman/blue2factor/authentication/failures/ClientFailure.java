@@ -32,7 +32,7 @@ public class ClientFailure extends Failure {
 	@RequestMapping(method = RequestMethod.GET)
 	public Object clientFailureProcessGet(HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model,
 			@PathVariable("CompanyID") String apiKey) {
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		String nextPage = "needsResync";
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);
@@ -79,6 +79,7 @@ public class ClientFailure extends Failure {
 			model.addAttribute("message", e.getMessage());
 		}
 		dataAccess.addLog("nextPage: " + nextPage, logLevel);
+		dataAccess.addLog("forward to: " + model.getAttribute("submitUrl"), logLevel);
 		return nextPage;
 	}
 }

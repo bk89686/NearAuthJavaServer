@@ -49,6 +49,8 @@
 		        <version>12.2.0</version>
 		        <configuration>
                     <nvdApiKey>${nvd.api.key}</nvdApiKey>
+                    <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+				    <failBuildOnCVSS>9</failBuildOnCVSS>
                 </configuration>
 		        <executions>
 		          <execution>
@@ -172,12 +174,12 @@
 			<artifactId>jakarta.mail-api</artifactId>
 			<version>${jakarta-mail-api.version}</version>
 		</dependency>
-		<!--<dependency>
+		<dependency>
 		    <groupId>jakarta.servlet</groupId>
 		    <artifactId>jakarta.servlet-api</artifactId>
 		    <version>${jakarta-servlet-api.version}</version>
 		    <scope>provided</scope>
-    	</dependency>-->
+		</dependency>
 		<dependency>
 		    <groupId>jakarta.servlet.jsp.jstl</groupId>
 		    <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
@@ -291,7 +293,7 @@
 		<dependency>
 		  	<groupId>ai.nearauth.authentication</groupId>
 		  	<artifactId>java-nearauth</artifactId>
-		  	<version>1.0.5-SNAPSHOT</version>
+		  	<version>1.0.6-SNAPSHOT</version>
 		</dependency>
 			
 	</dependencies>
@@ -314,7 +316,7 @@
 		<jackson-databind.version>3.1.0</jackson-databind.version>
 		<jackson-core.version>3.1.0</jackson-core.version>
 		<jakarta-mail-api.version>2.1.5</jakarta-mail-api.version>
-		<jakarta-servlet-api.version>6.0.0</jakarta-servlet-api.version>
+		<jakarta-servlet-api.version>6.1.0</jakarta-servlet-api.version>
 		<jakarta.servlet.jsp.jstl-api.version>3.0.2</jakarta.servlet.jsp.jstl-api.version>
 		<jakarta.servlet.jsp.jstl.version>3.0.1</jakarta.servlet.jsp.jstl.version>
 		<jdk.version>17</jdk.version>

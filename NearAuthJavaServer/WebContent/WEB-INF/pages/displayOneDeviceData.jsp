@@ -87,6 +87,6 @@
             
         </c:forEach>
     </table>
-    
+    <%@ include file="footerClient.jsp" %>
 </body>
 </html>

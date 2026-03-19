@@ -540,7 +540,7 @@ public class Encryption {
 			throws Exception {
 		DataAccess dataAccess = new DataAccess();
 		boolean success = false;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		signature = signature.replaceAll("%2B", "+");
 		signature = signature.replaceAll("%2F", "/");
 		signature = signature.replaceAll("%3D", "=");
@@ -582,7 +582,7 @@ public class Encryption {
 	private boolean verifySignatureApple(String plainText, String signatureString, PublicKey publicKey)
 			throws Exception {
 		DataAccess dataAccess = new DataAccess();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		boolean success = false;
 		try {
 			Signature sign = Signature.getInstance("SHA256withRSA");
@@ -697,9 +697,38 @@ public class Encryption {
 		}
 		return encryptedText;
 	}
+	
+	public static PrivateKey pemEncodedStringToPrivateKey(String keyString) throws Exception {
+        // 1. Remove the header, footer, and any whitespace/newlines
+        String strippedKey = keyString
+                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                .replace("-----END RSA PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+
+        // 2. Decode the Base64 string
+        byte[] keyBytes = Base64.getDecoder().decode(strippedKey);
+
+        /* * NOTE: If the key is truly PKCS#1, Java's PKCS8EncodedKeySpec might fail.
+         * However, most modern RSA strings provided in this format are actually 
+         * compatible or wrapping PKCS8. 
+         */
+        try {
+            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return kf.generatePrivate(spec);
+        } catch (Exception e) {
+            // If the above fails, it's a raw PKCS#1 key. 
+            // In a production Spring environment, it's often easiest to use 
+            // Bouncy Castle or convert the key to PKCS#8 via OpenSSL.
+            throw new Exception("Key format not directly supported by standard Java KeyFactory. " +
+                                "Ensure key is in PKCS#8 format.", e);
+        }
+	}
 
 	public PrivateKey stringToPrivateKey(String privateKeyStr) {
 		PrivateKey privateKey = null;
+		privateKeyStr = privateKeyStr.replaceAll("-----BEGIN RSA PRIVATE KEY-----", "");
+		privateKeyStr = privateKeyStr.replaceAll("-----END RSA PRIVATE KEY-----", "");
 		privateKeyStr = privateKeyStr.replaceAll("-----BEGIN PRIVATE KEY-----", "");
 		privateKeyStr = privateKeyStr.replaceAll("-----END PRIVATE KEY-----", "");
 
@@ -848,7 +877,7 @@ public class Encryption {
 			InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, UnsupportedEncodingException {
 		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		String base64 = null;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		if (publicKey != null) {
 			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 			DataAccess dataAccess = new DataAccess();
@@ -995,8 +1024,6 @@ public class Encryption {
 			    modBytes = reformat;
 			}
 			BigInteger publicExponent = pkcs1PublicKey.getPublicExponent();
-			dataAccess.addLog("modulus: " + modulus, LogConstants.TEMPORARILY_IMPORTANT);
-			dataAccess.addLog("publicExponent: " + publicExponent, LogConstants.TEMPORARILY_IMPORTANT);
 			RSAPublicKeySpec keySpec = new RSAPublicKeySpec(new BigInteger(1, modBytes), publicExponent);
 			KeyFactory kf = KeyFactory.getInstance("RSA");
 			generatedPublic = kf.generatePublic(keySpec);
@@ -1061,9 +1088,9 @@ public class Encryption {
 			PublicKey pk = stringToPublicKey(keyText, osClass);
 			if (pk != null) {
 				encPair = this.createEncryptedInstanceIdWithPublicKey(pk, firstLetter, osClass);
-				dataAccess.addLog(osClass + ": encrypted: " + encPair[0], LogConstants.TEMPORARILY_IMPORTANT);
-				dataAccess.addLog(osClass + ": to: " + encPair[1], LogConstants.TEMPORARILY_IMPORTANT);
-				dataAccess.addLog(osClass + ": with " + keyText, LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog(osClass + ": encrypted: " + encPair[0], LogConstants.TRACE);
+				dataAccess.addLog(osClass + ": to: " + encPair[1], LogConstants.TRACE);
+				dataAccess.addLog(osClass + ": with " + keyText, LogConstants.TRACE);
 			} else {
 				dataAccess.addLog("the text '" + keyText + "' is not a valid key", LogConstants.ERROR);
 			}

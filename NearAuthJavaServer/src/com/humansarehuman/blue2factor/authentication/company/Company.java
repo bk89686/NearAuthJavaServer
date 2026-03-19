@@ -122,7 +122,7 @@ public class Company extends BaseController {
 	@SuppressWarnings("ucd")
 	public String companyPageProcessPost(HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model)
 			throws IOException {
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		AdminSignin adminSignin = checkPermission(request, httpResponse);
 		String nextPage;
 		CompanyResponseHelper companyResponseHelper = null;

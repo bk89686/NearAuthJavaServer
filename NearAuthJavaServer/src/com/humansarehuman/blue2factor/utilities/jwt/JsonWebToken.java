@@ -93,7 +93,7 @@ public class JsonWebToken {
 	public String buildJwt(IdentityObjectFromServer idObj, String audience, Date expire) {
 		String jwt = null;
 		DataAccess dataAccess = new DataAccess();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		try {
 			DeviceDbObj device = idObj.getDevice();
 			CompanyDbObj company = idObj.getCompany();
@@ -111,7 +111,6 @@ public class JsonWebToken {
 				}
 				KeyDbObj publicKey = dataAccess.getCurrentJwtPublicKey();
 				String url = Urls.SECURE_URL + Urls.GET_PUBLIC_KEY.replace("{keyId}", publicKey.getKeyId());
-//				String issuer = Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", company.getEntityIdVal());
 				String issuer = Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", company.getApiKey());
 				dataAccess.addLog("issuer: " + issuer, logLevel);
 				dataAccess.addLog(device.getDeviceId(), "login url: " + idObj.getCompany().getCompleteCompanyLoginUrl(),
@@ -153,11 +152,7 @@ public class JsonWebToken {
 				    .build();
 			jws = parser.parseSignedClaims(jwsString);
 			claims = jws.getPayload();
-//			JwtParserBuilder parseBuilder = Jwts.parser();
-//			JwtParser parser = parseBuilder.setSigningKey(publicKey).build();
-//			jws = parser.parseClaimsJws(jwsString);
-//			dataAccess.addLog("jwt parsed");
-//			claims = jws.getBody();
+
 		} catch (ExpiredJwtException e) {
 			dataAccess.addLog("Expired key, setting claims");
 			claims = e.getClaims();
@@ -246,7 +241,7 @@ public class JsonWebToken {
 
 	public boolean validateJwt(String jwsString, boolean ignoreExpiration) {
 		boolean validated = false;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 
 		Claims claims = decryptJwt(jwsString, dataAccess);

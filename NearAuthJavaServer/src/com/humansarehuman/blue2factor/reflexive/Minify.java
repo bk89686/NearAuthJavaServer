@@ -35,7 +35,8 @@ class Minify {
         return fileExists;
     }
 
-    private String executeCommand(String command) {
+    @SuppressWarnings("deprecation")
+	private String executeCommand(String command) {
 
         StringBuffer output = new StringBuffer();
 

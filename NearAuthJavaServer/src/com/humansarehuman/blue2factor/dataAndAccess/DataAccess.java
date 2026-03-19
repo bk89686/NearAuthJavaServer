@@ -535,7 +535,7 @@ public class DataAccess extends DeviceFields {
 			prepStmt.setString(2, browserToken);
 			prepStmt.setBoolean(3, true);
 			prepStmt.setString(4, url);
-			this.logQueryImportant("getKeyByTypeAndBrowserTokenAndSite", prepStmt);
+			this.logQuery("getKeyByTypeAndBrowserTokenAndSite", prepStmt);
 			rs = executeQuery(prepStmt);
 			if (rs.next()) {
 				key = recordToKey(rs);
@@ -1116,7 +1116,7 @@ public class DataAccess extends DeviceFields {
 				prepStmt.setString(4, url);
 			}
 			rs = executeQuery(prepStmt);
-			this.logQueryImportant(deviceId, "getKeyByTypeAndDeviceId", prepStmt);
+			this.logQuery("getKeyByTypeAndDeviceId", prepStmt);
 			if (rs.next()) {
 				key = recordToKey(rs);
 			} else {
@@ -3699,8 +3699,13 @@ public class DataAccess extends DeviceFields {
 
 	public TokenDbObj addTokenWithId(DeviceDbObj device, String browserId, String tokenId, TokenDescription description,
 			int permission, String url) {
-		return this.addTokenWithId(device.getGroupId(), device.getDeviceId(), browserId, tokenId, description,
+		
+		TokenDbObj newToken = this.addTokenWithId(device.getGroupId(), device.getDeviceId(), browserId, tokenId, description,
 				permission, url);
+		if (newToken != null) {
+			this.expireTokensExcept(browserId, tokenId, "addTokenWithId", url);
+		}
+		return newToken;
 	}
 
 	public TokenDbObj addTempTokenWithId(DeviceDbObj device, String browserId, String tokenId,
@@ -4648,6 +4653,33 @@ public class DataAccess extends DeviceFields {
 		}
 		return token;
 	}
+	
+	public TokenDbObj getActiveTokenByOrDescriptionAndTokenId(TokenDescription desc, 
+			String tokenId) {
+		TokenDbObj token = null;
+		Timestamp now = DateTimeUtilities.getCurrentTimestamp();
+		String query = "SELECT * FROM B2F_TOKEN WHERE DESCRIPTION = ? AND "
+				+ "TOKEN_ID = ? AND EXPIRE_TIME > ?";
+		Connection conn = null;
+		PreparedStatement prepStmt = null;
+		ResultSet rs = null;
+		try {
+			conn = MySqlConn.getConnection();
+			prepStmt = conn.prepareStatement(query);
+			prepStmt.setString(1, desc.toString());
+			prepStmt.setString(2, tokenId);
+			prepStmt.setTimestamp(3, now);
+			rs = executeQuery(prepStmt);
+			if (rs.next()) {
+				token = this.recordToToken(rs);
+			}
+		} catch (Exception e) {
+			addLog("getActiveTokenByOrDescriptionAndTokenId", e);
+		} finally {
+			MySqlConn.close(rs, prepStmt, conn);
+		}
+		return token;
+	}
 
 	public TokenDbObj getActiveTokenByOrDescriptionAndTokenId(TokenDescription desc, TokenDescription desc2,
 			String tokenId) {
@@ -5019,6 +5051,14 @@ public class DataAccess extends DeviceFields {
 	}
 
 	private boolean expireTokensExcept(BrowserDbObj browser, String exceptToken, String src, String url) {
+		boolean expired = false;
+		if (browser != null) {
+			expired = this.expireTokensExcept(browser.getBrowserId(), exceptToken, src, url);
+		}
+		return expired;
+	}
+	
+	private boolean expireTokensExcept(String browserId, String exceptToken, String src, String url) {
 		addLog("expireTokensExcept", "called from " + src);
 		boolean success = false;
 		Timestamp now = DateTimeUtilities.getCurrentTimestamp();
@@ -5034,7 +5074,7 @@ public class DataAccess extends DeviceFields {
 			prepStmt = conn.prepareStatement(query);
 			prepStmt.setTimestamp(1, now);
 			prepStmt.setTimestamp(2, now);
-			prepStmt.setString(3, browser.getBrowserId());
+			prepStmt.setString(3, browserId);
 			prepStmt.setString(4, exceptToken);
 			prepStmt.setTimestamp(5, oneSecondAgo);
 			prepStmt.setString(6, url);
@@ -5050,8 +5090,12 @@ public class DataAccess extends DeviceFields {
 	}
 
 	public boolean expireTokensExcept(String exceptToken, TokenDescription tokenDescription, String src, String url) {
+		boolean expired = false;
 		BrowserDbObj browser = this.getBrowserByToken(exceptToken, tokenDescription);
-		return this.expireTokensExcept(browser, exceptToken, src, url);
+		if (browser != null) {
+			expired = this.expireTokensExcept(browser, exceptToken, src, url);
+		}
+		return expired;
 	}
 
 	public boolean expireLambdaTokensExcept(String exceptToken, String deviceId) {

@@ -48,11 +48,12 @@ public class ValidateToken extends B2fApi {
 			HttpServletResponse httpResponse, ModelMap model, @PathVariable("apiKey") String apiKey,
 			@RequestHeader(name = "Authorization") String authHeader) {
 		AccessAllowedWithAccessType response;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		SamlDataAccess dataAccess = new SamlDataAccess();
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);
 		if (company != null) {
 			String jwt = getJwtFromAuthHeader(authHeader, dataAccess);
-			dataAccess.addLog("jwt: " + jwt, LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("jwt: " + jwt, logLevel);
 			if (!TextUtils.isEmpty(jwt) && !jwt.equals("None")) {
 				response = validateWithJwt(request, httpResponse, jwt, company, dataAccess);
 				if (response.getReason().equals(Constants.NEEDS_SAML_VERIFICATION)) {
@@ -61,7 +62,7 @@ public class ValidateToken extends B2fApi {
 			} else {
 				String b2fAuth = getPersistentToken(request);
 				if (!TextUtils.isEmpty(b2fAuth)) {
-					dataAccess.addLog("token was found", LogConstants.TRACE);
+					dataAccess.addLog("token was found", logLevel);
 					DeviceDbObj device = dataAccess.getDeviceByToken(jwt, "ValidateToken");
 					if (device != null) {
 						response = validateWithSession(b2fAuth, company, device, dataAccess);
@@ -110,6 +111,7 @@ public class ValidateToken extends B2fApi {
 					if (!browser.isExpired()) {
 						IdentityObjectFromServer idObj = new IdentityObjectFromServer(browser, false);
 						String audience = company.getCompleteCompanyLoginUrl();
+//						String ourIssuerStr = Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", company.getApiKey());
 						token = new JsonWebToken().buildJwt(idObj, audience);
 						accessAllowedWithAccessType.setToken(token);
 					} else {
@@ -174,9 +176,9 @@ public class ValidateToken extends B2fApi {
 							JsonWebToken jwtBuilder = new JsonWebToken();
 							apiResponse = dataAccess.isAccessAllowedWithConnectionMethod(device, "validateWithJwt", false);
 							if (apiResponse.isAccessAllowed()) {
-								dataAccess.addLog("access was allowed", LogConstants.TEMPORARILY_IMPORTANT);
+								dataAccess.addLog("access was allowed", LogConstants.TRACE);
 								if (!browser.isExpired()) {
-									dataAccess.addLog("browser was not expired", LogConstants.TEMPORARILY_IMPORTANT);
+									dataAccess.addLog("browser was not expired", LogConstants.TRACE);
 									String audience = company.getCompleteCompanyLoginUrl();
 									apiResponse.setToken(jwtBuilder.buildJwtForServer(idObj, audience));
 								} else {

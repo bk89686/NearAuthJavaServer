@@ -208,11 +208,11 @@ public class SamlAndLdapResponse extends B2fApi {
 			IdentityObjectFromServer idObj, String ipAddress, String relayState, String email, String samlResponse,
 			SamlDataAccess dataAccess) {
 		int outcome = Outcomes.FAILURE;
-		dataAccess.addLog("device is not null", LogConstants.TEMPORARILY_IMPORTANT);
+		dataAccess.addLog("device is not null", LogConstants.TRACE);
 		String nextPage = null;
 		GroupDbObj group = idObj.getGroup();
 		if (group != null) {
-			dataAccess.addLog("group is not null", LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("group is not null", LogConstants.TRACE);
 			if (isGroupNameEquivalent(group.getGroupName(), email)) {
 				try {
 //					idObj.getDevice().setSignedIn(true);
@@ -263,7 +263,7 @@ public class SamlAndLdapResponse extends B2fApi {
 				outcomeResponseAndIdObj = this.passThrough(httpResponse, idObj.getCompany(), samlAuthnRequest,
 						dataAccess, ipAddress, group);
 				idObj = outcomeResponseAndIdObj.idObj;
-				UrlAndModel urlAndModel = this.reSetup(model, idObj, dataAccess);
+				UrlAndModel urlAndModel = this.reSetup(model, idObj, null, dataAccess);
 				nextPage = urlAndModel.getUrl();
 				dataAccess.addLog("nextPage: " + nextPage);
 				model = urlAndModel.getModelMap();
@@ -302,7 +302,7 @@ public class SamlAndLdapResponse extends B2fApi {
 			outcomeResponseAndIdObj = this.passThrough(httpResponse, company, samlAuthnRequest, dataAccess, ipAddress,
 					group);
 			idObj = outcomeResponseAndIdObj.idObj;
-			UrlAndModel urlAndModel = this.reSetup(model, idObj, dataAccess);
+			UrlAndModel urlAndModel = this.reSetup(model, idObj, null, dataAccess);
 			nextPage = urlAndModel.getUrl();
 			dataAccess.addLog("nextPage: " + nextPage);
 			model = urlAndModel.getModelMap();
@@ -346,7 +346,7 @@ public class SamlAndLdapResponse extends B2fApi {
 				byte[] decodedBytes = Base64.getDecoder().decode(samlResponse);
 				String decryptedResponse = new String(decodedBytes, StandardCharsets.UTF_8);
 				dataAccess.addLog("decoded bytes: '" + decryptedResponse + "' - RelayState: '" + relayState + "'", 
-						LogConstants.TEMPORARILY_IMPORTANT);
+						LogConstants.TRACE);
 				Response response = getSamlResponse(decodedBytes);
 				new Saml().logAuthnResponse(response, dataAccess);
 
@@ -358,7 +358,7 @@ public class SamlAndLdapResponse extends B2fApi {
 							samlAuthRequest = dataAccess.getAuthRequestByOutgoingRequestId(inResponseTo);
 							String email = getEmailFromResponse(response, dataAccess);
 							if (samlAuthRequest != null) {
-								dataAccess.addLog("sender: " + samlAuthRequest.getSender(), LogConstants.TEMPORARILY_IMPORTANT);
+								dataAccess.addLog("sender: " + samlAuthRequest.getSender(), LogConstants.TRACE);
 								fnResponse.setOutcome(validateIdpResponse(response, samlAuthRequest, company,
 										dataAccess, ipAddress, true));
 								if (fnResponse.getOutcome() == Outcomes.SUCCESS) {
@@ -579,13 +579,12 @@ public class SamlAndLdapResponse extends B2fApi {
 							+ dataAccess.getNonTempDevicesByGroupId(group.getGroupId(), true).size());
 				}
 				boolean passThrough = dataAccess.isPassThroughAllowed(company, group);
-
 				if (passThrough) {
 					// send them back to where they came from
 					outcomeResponseAndIdObj = this.passThrough(httpResponse, company, samlAuthnRequest, dataAccess,
 							ipAddress, group);
 					idObj = outcomeResponseAndIdObj.idObj;
-					UrlAndModel urlAndModel = this.reSetup(model, idObj, dataAccess);
+					UrlAndModel urlAndModel = this.reSetup(model, idObj, null, dataAccess);
 					nextPage = urlAndModel.getUrl();
 					dataAccess.addLog("nextPage: " + nextPage);
 					model = urlAndModel.getModelMap();
@@ -770,7 +769,7 @@ public class SamlAndLdapResponse extends B2fApi {
 		Saml saml = new Saml();
 		boolean success = outcome == Outcomes.SUCCESS;
 		saml.buildResponseFromIncomingSamlRecord(samlAuthnRequest, group, apiKey, entityIdVal, success, dataAccess);
-		new DataAccess().addLog("found samlresponse - now we will redirect back to service provider", LogConstants.TEMPORARILY_IMPORTANT);
+		new DataAccess().addLog("found samlresponse - now we will redirect back to service provider", LogConstants.TRACE);
 		String relayState = samlAuthnRequest.getIncomingRelayState();
 		// post the relaystate and samlResponse
 		model.addAttribute("action", samlAuthnRequest.getIncomingAcsUrl());
@@ -1022,13 +1021,12 @@ public class SamlAndLdapResponse extends B2fApi {
 		int outcome = Outcomes.FAILURE;
 		if (group != null) {
 			if (!samlDataAccess.doesConnectionExistByEmail(email)) {
-				samlDataAccess.addLog("user found, not yet activated", LogConstants.TEMPORARILY_IMPORTANT);
+				samlDataAccess.addLog("user found, not yet activated", LogConstants.TRACE);
 				outcome = Outcomes.SUCCESS;
 			} else {
 				// they are signed up
-				samlDataAccess.addLog("user found, they are signed up", LogConstants.TEMPORARILY_IMPORTANT);
+				samlDataAccess.addLog("user found, they are signed up", LogConstants.TRACE);
 				DeviceDbObj device = idObj.getDevice();
-				samlDataAccess.setSignedIn(device, true);
 				if (TextUtils.isBlank(samlAuthnRequest.getGroupId())) {
 					samlAuthnRequest.setGroupId(group.getGroupId());
 					samlDataAccess.updateSamlAuthRequestByRelayState(samlAuthnRequest);
@@ -1075,7 +1073,7 @@ public class SamlAndLdapResponse extends B2fApi {
 			SamlAuthnRequestDbObj samlAuthnRequest, SamlDataAccess samlDataAccess) {
 		UrlModelAndHttpResponse response;
 		if (!TextUtils.isEmpty(samlAuthnRequest.getIncomingRelayState())) {
-			samlDataAccess.addLog("redirecting back to the SP", LogConstants.TEMPORARILY_IMPORTANT);
+			samlDataAccess.addLog("redirecting back to the SP", LogConstants.TRACE);
 			UrlAndModel urlAndModel = this.respondToSp(model, samlAuthnRequest, idObj.getGroup(),
 					idObj.getCompany().getApiKey(), idObj.getCompany().getEntityIdVal(), Outcomes.SUCCESS,
 					samlDataAccess);
@@ -1083,7 +1081,7 @@ public class SamlAndLdapResponse extends B2fApi {
 		} else {
 			Failure failure = new Failure();
 			String redirectUrl = failure.getReferrer(request, idObj.getCompany(), samlDataAccess);
-			samlDataAccess.addLog("redirecting to: " + redirectUrl, LogConstants.TEMPORARILY_IMPORTANT);
+			samlDataAccess.addLog("redirecting to: " + redirectUrl, LogConstants.TRACE);
 			httpResponse.setHeader("Location", redirectUrl);
 			httpResponse.setStatus(302);
 			response = new UrlModelAndHttpResponse(null, model, httpResponse);
@@ -1182,7 +1180,7 @@ public class SamlAndLdapResponse extends B2fApi {
 							outcome = validateSignature(response, samlIdp, samlDataAccess);
 							if (outcome == Outcomes.SUCCESS) {
 								updateSignedIn(samlAuthnRequest, samlDataAccess);
-								samlDataAccess.addLog("full steam ahead", LogConstants.TEMPORARILY_IMPORTANT);
+								samlDataAccess.addLog("full steam ahead", LogConstants.TRACE);
 							}
 						} catch (Exception e) {
 							samlDataAccess.addLog(e);

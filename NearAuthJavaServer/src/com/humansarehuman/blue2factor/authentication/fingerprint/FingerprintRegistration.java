@@ -56,7 +56,9 @@ public class FingerprintRegistration extends B2fApi {
 	public @ResponseBody FingerprintRegistrationResponse getJson(HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		GeneralUtilities generalUtilities = new GeneralUtilities();
-		Rp rp = new Rp(Constants.APP_NAME, Constants.APP_NAME, Urls.ICON_PATH);
+		String origin = request.getHeader("Origin");
+		String nakedDomain = GeneralUtilities.getNakedDomain(origin);
+		Rp rp = new Rp(nakedDomain, nakedDomain, Urls.ICON_PATH);
 		User user = new User("", "", "");
 		PubKeyCredParam[] pubKeyCredParams = new PubKeyCredParam[0];
 		AuthenticatorSelection authenticatorSelection = new AuthenticatorSelection();
@@ -73,7 +75,7 @@ public class FingerprintRegistration extends B2fApi {
 			throws IOException {
 		boolean success = false;
 		String instanceId = frReq.getBrowserSession();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		dataAccess.addLog("instanceId: " + instanceId, logLevel);
 		GeneralUtilities generalUtilities = new GeneralUtilities();
@@ -86,6 +88,7 @@ public class FingerprintRegistration extends B2fApi {
 			PubKeyCredParam[] pubKeyCredParams = null;
 			TokenDbObj token = dataAccess.getToken(instanceId);
 			if (token != null) {
+				
 				String origin = GeneralUtilities.getUrlHost(frReq.getReqUrl());
 				dataAccess.removeOtherAuthenticator(token.getBrowserId(), origin);
 				DeviceDbObj device = dataAccess.getDeviceBySessionTokenIgnoringExpiration(instanceId);
@@ -101,7 +104,8 @@ public class FingerprintRegistration extends B2fApi {
 						CompanyDbObj company = dataAccess.getCompanyByDevId(device.getDeviceId());
 						dataAccess.addLog(device.getDeviceId(), "using baseUrl: " + origin, logLevel);
 						// we may want baseUrl here and not origin
-						rp = new Rp(origin, origin, Urls.ICON_PATH);
+						String nakedDomain = GeneralUtilities.getNakedDomain(origin);
+						rp = new Rp(nakedDomain, nakedDomain, Urls.ICON_PATH);
 						GroupDbObj gp = dataAccess.getGroupById(device.getGroupId());
 						user = new User(gp.getGroupName(), instanceId, gp.getUsername());
 						if (this.doesUrlMatchRegex(company, frReq.getReqUrl(), dataAccess) != null) {

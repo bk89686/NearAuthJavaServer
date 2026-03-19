@@ -22,6 +22,7 @@ import com.humansarehuman.blue2factor.entities.tables.BrowserDbObj;
 import com.humansarehuman.blue2factor.entities.tables.CompanyDbObj;
 import com.humansarehuman.blue2factor.entities.tables.DeviceDbObj;
 import com.humansarehuman.blue2factor.entities.tables.TokenDbObj;
+import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 import com.humansarehuman.blue2factor.utilities.jwt.JsonWebToken;
 
 public class Failure extends B2fApi {
@@ -31,7 +32,7 @@ public class Failure extends B2fApi {
 			ModelMap model, IdentityObjectFromServer idObj, CompanyDataAccess dataAccess, String authToken)
 			throws IOException {
 		String nextPage = "needsResync";
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		if (idObj != null) {
 			DeviceDbObj device = idObj.getDevice();
 			if (device != null) {
@@ -49,9 +50,13 @@ public class Failure extends B2fApi {
 						if (dataAccess.isAccessAllowed(device, "checkForAuth")) {
 							if (dataAccess.urlMatchesCompany(company, submitUrl)) {
 								dataAccess.addLog(device.getDeviceId(), "thumbs up", logLevel);
+								String tokenId = GeneralUtilities.randomString();
+								TokenDbObj browserToken = dataAccess.addTokenWithId(device, browser.getBrowserId(), tokenId, TokenDescription.BROWSER_TOKEN, 0, submitUrl);
+								idObj.setBrowserToken(browserToken);
 								UrlAndModel urlAndModel = returnToSenderViaForm(submitUrl, model, idObj, dataAccess);
 								nextPage = urlAndModel.getUrl();
 								model = urlAndModel.getModelMap();
+								dataAccess.addLog("forward to: " + model.getAttribute("submitUrl"), logLevel);
 							} else {
 								dataAccess.addLog("url doesn't match", logLevel);
 							}
@@ -92,7 +97,7 @@ public class Failure extends B2fApi {
 			dataAccess.addLog("idobj was null", logLevel);
 		}
 		model.addAttribute("environment", Constants.ENVIRONMENT.toString());
-		dataAccess.addLog("nextPage: " + nextPage);
+		dataAccess.addLog("nextPage: " + nextPage, logLevel);
 		UrlModelAndHttpResponse urlModelAndHttpResponse = new UrlModelAndHttpResponse(nextPage, model, httpResponse);
 		return urlModelAndHttpResponse;
 	}
@@ -101,7 +106,7 @@ public class Failure extends B2fApi {
 			ModelMap model, IdentityObjectFromServer idObj, CompanyDataAccess dataAccess, String authToken,
 			String session) {
 		String nextPage = "needsResync";
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		DeviceDbObj device = idObj.getDevice();
 		if (isTempBrowser(idObj.getBrowser())) {
 			dataAccess.addLog("authToken: " + authToken, logLevel);
@@ -131,6 +136,7 @@ public class Failure extends B2fApi {
 						nextPage = urlAndModel.getUrl();
 						dataAccess.addLog("nextPage: " + nextPage, logLevel);
 						model = urlAndModel.getModelMap();
+						dataAccess.addLog("forward to: " + model.getAttribute("submitUrl"), logLevel);
 					} catch (Exception e) {
 						nextPage = "error";
 						model.addAttribute("errorMessage", e.getMessage());
@@ -152,14 +158,16 @@ public class Failure extends B2fApi {
 	protected UrlAndModel returnToSenderViaForm(String submitUrl, ModelMap model, IdentityObjectFromServer idObj,
 			CompanyDataAccess dataAccess) {
 		String audience = idObj.getCompany().getCompleteCompanyLoginUrl();
+//		String ourIssuerStr = Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", idObj.getCompany().getApiKey());
 		String jwt = new JsonWebToken().buildJwt(idObj, audience);
 		model.addAttribute("submitUrl", submitUrl);
 		model.addAttribute("jwt", jwt);
 		boolean central = idObj.getDevice().isCentral();
 		model.addAttribute("central", central);
-		UrlAndModel urlAndModel = this.reSetup(model, idObj, dataAccess);
+		model.addAttribute("nAdid", idObj.getBrowserToken().getTokenId());
+		UrlAndModel urlAndModel = this.reSetup(model, idObj, submitUrl, dataAccess);
 		model = urlAndModel.getModelMap();
-		dataAccess.addLog("sending to resetJwt to forward to " + submitUrl);
+		dataAccess.addLog("sending to resetJwt to forward to " + submitUrl, LogConstants.TRACE);
 		return new UrlAndModel("resetJwt", model);
 	}
 
@@ -177,6 +185,7 @@ public class Failure extends B2fApi {
 				model.addAttribute("b2fSetup", cookieString);
 				model.addAttribute("central", idObj.getDevice().isCentral());
 				String audience = idObj.getCompany().getCompleteCompanyLoginUrl();
+//				String ourIssuerStr = Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", idObj.getCompany().getApiKey());
 				String jwt = new JsonWebToken().buildExpiredJwt(
 						new IdentityObjectFromServer(idObj.getCompany(), idObj.getDevice(), idObj.getBrowser(), false), audience);
 				model.addAttribute("jwt", jwt);
@@ -199,6 +208,9 @@ public class Failure extends B2fApi {
 		String src = this.getSession(request, "referrer");
 		if (TextUtils.isEmpty(src)) {
 			src = this.getSession(request, "url");
+			if (src.endsWith("?")) {
+				src = src.substring(0, src.length() - 1);
+			}
 			if (TextUtils.isEmpty(src)) {
 				src = company.getCompleteCompanyLoginUrl();
 			}

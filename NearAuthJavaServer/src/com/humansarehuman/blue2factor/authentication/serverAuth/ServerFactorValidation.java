@@ -72,7 +72,7 @@ public class ServerFactorValidation extends B2fApi {
 	public @ResponseBody ApiResponseWithToken serverFactorValidationPostJson(@RequestBody ApiRequestWithJsonKey apiReq,
 			HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) throws IOException {
 		DataAccess dataAccess = new DataAccess();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		dataAccess.addLog("ServerFactorValidation", "entry");
 		IdentityObjectFromServer idObj = setIdentityObject(apiReq);
 		String browserSession = apiReq.getBrowserSession();

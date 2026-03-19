@@ -272,7 +272,7 @@ public class Factor2Check extends B2fApi {
 		String tokenStr = "";
 		String jwt = "";
 		SamlDataAccess dataAccess = new SamlDataAccess();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		dataAccess.addLog("called with code: " + accessCode, logLevel);
 		try {
 			AccessCodeDbObj access = dataAccess.getAccessCodeFromAccessString(accessCode);

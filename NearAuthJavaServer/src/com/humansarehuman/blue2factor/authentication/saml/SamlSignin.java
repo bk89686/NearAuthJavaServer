@@ -283,7 +283,7 @@ public class SamlSignin extends B2fApi {
 				String authId = "b2f_" + GeneralUtilities.randomString();
 				String incomingRequestId = incomingAuthnRequest.getID();
 				String identityProviderName = samlIdp.getIdentityProviderName();
-				dataAccess.addLog("building new request", LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog("building new request", LogConstants.TRACE);
 				authnRequest = saml.buildAuthnRequest(samlIdp, company, authId, true);
 				String tableId = GeneralUtilities.randomString();
 				java.sql.Timestamp now = DateTimeUtilities.getCurrentTimestamp();

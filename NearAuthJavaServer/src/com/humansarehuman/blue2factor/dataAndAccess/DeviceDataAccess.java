@@ -205,7 +205,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			rssi = conn.getPeripheralRssi();
 		}
 		
-		this.addLog("rssi timestamp: " + ts, LogConstants.TEMPORARILY_IMPORTANT);
+		this.addLog("rssi timestamp: " + ts, LogConstants.TRACE);
 		return new RssiAndTime(rssi, ts);
 	}
 
@@ -2602,16 +2602,16 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		if (device != null) {
 			if (!device.isScreensaverOn()) {
 				if (isProximate(device, false)) {
-					addLog(device.getDeviceId(), "prox", LogConstants.TEMPORARILY_IMPORTANT);
+					addLog(device.getDeviceId(), "prox", LogConstants.TRACE);
 					connType = ConnectionType.PROX;
 					success = true;
 				} else {
-					addLog(device.getDeviceId(), "not prox", LogConstants.TEMPORARILY_IMPORTANT);
+					addLog(device.getDeviceId(), "not prox", LogConstants.TRACE);
 					ConnectedAndConnectionType cct = didGiveAccess(device, deactivateFingerprint);
 					success = cct.isConnected();
 					connType = cct.getConnectionType();
 					if (!success) {
-						addLog(device.getDeviceId(), "did not give access", LogConstants.TEMPORARILY_IMPORTANT);
+						addLog(device.getDeviceId(), "did not give access", LogConstants.TRACE);
 						success = isBtConnectedWithRecentTransfer(device);
 						if (success) {
 							connType = ConnectionType.PROX;
@@ -2942,15 +2942,16 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		boolean hasHadCommunication = false;
 		if (!peripheralDevice.isCentral()) {
 			if (peripheralDevice.getDeviceClass().equals(DeviceClass.COMPUTER)) {
-				hasHadCommunication = DateTimeUtilities
-						.timeDifferenceInSecondsFromNow(peripheralDevice.getLastVariableRetrieval()) < 120;
+				Double lastRetrievalSecondsAgo = DateTimeUtilities
+						.timeDifferenceInSecondsFromNow(peripheralDevice.getLastVariableRetrieval());
+				hasHadCommunication = lastRetrievalSecondsAgo < 120;
 			} else {
 				hasHadCommunication = true;
 			}
 			if (!hasHadCommunication) {
 				this.addLog(peripheralDevice.getDeviceId(),
-						"the peripheral, which is a computer has not been in contact recently enough",
-						LogConstants.WARNING);
+						"the peripheral, which is a computer has not been in contact recently enough: " +
+						peripheralDevice.getLastVariableRetrieval(), LogConstants.WARNING);
 			}
 		}
 		return hasHadCommunication;

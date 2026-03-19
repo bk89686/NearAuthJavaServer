@@ -84,69 +84,70 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 		int outcome = Outcomes.FAILURE;
 		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		String reason = "";
-		AuthResponse authResp = auth.getResponse();
-		String browserSession = auth.getBrowserSession();
-		String credIdStr = auth.getId();
-		byte[] credentialId = credIdStr.getBytes();
-		byte[] authenticatorData = Base64.getUrlDecoder().decode(authResp.getAuthenticatorData());
-		byte[] clientDataJSONBytes= Base64.getUrlDecoder().decode(authResp.getClientDataJSON());
-		ObjectConverter objConverter = new ObjectConverter();
-		CollectedClientDataConverter collectedClientDataConverter = new CollectedClientDataConverter(objConverter);
-        
-		CollectedClientData collectedClientData = collectedClientDataConverter.convert(clientDataJSONBytes);
-		
-		byte[] signature = Base64.getUrlDecoder().decode(authResp.getSignature());
-
-		String url = auth.getReqUrl();
-		Origin origin = new Origin(GeneralUtilities.getUrlProtocolAndHost(url));
-		String rpId = GeneralUtilities.getNakedDomain(url);
-		AuthenticatorDbObj authDbObj = dataAccess.getActiveAuthenticatorByCredentialId(credIdStr);
-		if (authDbObj != null) {
-			dataAccess.addLog("authDbObj found for: " + credIdStr, logLevel);
-			dataAccess.addLog("origin: " + origin, logLevel);
-			dataAccess.addLog("rpId: " + rpId, logLevel);
-			dataAccess.addLog("challenge: " + authDbObj.getChallenge(), logLevel);
-			Challenge challenge = new DefaultChallenge(authDbObj.getChallenge());
-//			byte[] tokenBindingId = new byte[] { 0x01, 0x23, 0x45 };
-//			ServerProperty serverPropertyOld = new ServerProperty(origin, rpId, challenge, tokenBindingId);
-			ServerProperty serverProperty = ServerProperty.builder().origin(origin).rpId(rpId).challenge(challenge).build();
-			List<byte[]> allowCredentials = null;
-			boolean userVerificationRequired = true;
-			boolean userPresenceRequired = true;
-
-//			Authenticator authenticator = new AuthenticatorImpl(authDbObj.getAttestedCredentialData(),
-//					authDbObj.getAttestationObject().getAttestationStatement(), authDbObj.getSignCount());
-			CredentialRecord credentialRecord = new CredentialRecordImpl(authDbObj.getAttestationObject(), collectedClientData, null, null);
-			dataAccess.addLog("authenticator created", logLevel);
-			AuthenticationRequest authenticationRequest = new AuthenticationRequest(credentialId, authenticatorData,
-					clientDataJSONBytes, signature);
-			AuthenticationParameters authenticationParameters = new AuthenticationParameters(serverProperty,
-					credentialRecord, allowCredentials, userVerificationRequired, userPresenceRequired);
-			AuthenticationData authenticationData;
-			WebAuthnManager webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
-			try {
-				authenticationData = webAuthnManager.parse(authenticationRequest);
+		try {
+			AuthResponse authResp = auth.getResponse();
+			String browserSession = auth.getBrowserSession();
+			String credIdStr = auth.getId();
+			byte[] credentialId = credIdStr.getBytes();
+			byte[] authenticatorData = Base64.getUrlDecoder().decode(authResp.getAuthenticatorData());
+			byte[] clientDataJSONBytes= Base64.getUrlDecoder().decode(authResp.getClientDataJSON());
+			ObjectConverter objConverter = new ObjectConverter();
+			CollectedClientDataConverter collectedClientDataConverter = new CollectedClientDataConverter(objConverter);
+	        
+			CollectedClientData collectedClientData = collectedClientDataConverter.convert(clientDataJSONBytes);
+			
+			byte[] signature = Base64.getUrlDecoder().decode(authResp.getSignature());
+	
+			String url = auth.getReqUrl();
+			Origin origin = new Origin(GeneralUtilities.getUrlProtocolAndHost(url));
+			String rpId = GeneralUtilities.getNakedDomain(url);
+			AuthenticatorDbObj authDbObj = dataAccess.getActiveAuthenticatorByCredentialId(credIdStr);
+			if (authDbObj != null) {
+				dataAccess.addLog("authDbObj found for: " + credIdStr, logLevel);
+				dataAccess.addLog("origin: " + origin, logLevel);
+				dataAccess.addLog("rpId: " + rpId, logLevel);
+				dataAccess.addLog("challenge: " + authDbObj.getChallenge(), logLevel);
+				Challenge challenge = new DefaultChallenge(authDbObj.getChallenge());
+	//			byte[] tokenBindingId = new byte[] { 0x01, 0x23, 0x45 };
+	//			ServerProperty serverPropertyOld = new ServerProperty(origin, rpId, challenge, tokenBindingId);
+				ServerProperty serverProperty = ServerProperty.builder().origin(origin).rpId(rpId).challenge(challenge).build();
+				List<byte[]> allowCredentials = null;
+				boolean userVerificationRequired = true;
+				boolean userPresenceRequired = true;
+	
+				CredentialRecord credentialRecord = new CredentialRecordImpl(authDbObj.getAttestationObject(), collectedClientData, null, null);
+				dataAccess.addLog("authenticator created", logLevel);
+				AuthenticationRequest authenticationRequest = new AuthenticationRequest(credentialId, authenticatorData,
+						clientDataJSONBytes, signature);
+				AuthenticationParameters authenticationParameters = new AuthenticationParameters(serverProperty,
+						credentialRecord, allowCredentials, userVerificationRequired, userPresenceRequired);
+				AuthenticationData authenticationData;
+				WebAuthnManager webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
 				try {
-					dataAccess.addLog("authenticationData parsed: " + authenticationData, logLevel);
-					dataAccess.addLog("authenticationParameters: " + authenticationParameters, logLevel);
-					webAuthnManager.verify(authenticationData, authenticationParameters);
-//					webAuthnManager.validate(authenticationData, authenticationParameters);
-					dataAccess.addLog("webAuthnManager validated", logLevel);
-					String session = dataAccess.addCompletedCheckForFingerprint(this, browserSession, request);
-					if (session != null) {
-						reason = session;
-						outcome = Outcomes.SUCCESS;
+					authenticationData = webAuthnManager.parse(authenticationRequest);
+					try {
+						dataAccess.addLog("authenticationData parsed: " + authenticationData, logLevel);
+						dataAccess.addLog("authenticationParameters: " + authenticationParameters, logLevel);
+						webAuthnManager.verify(authenticationData, authenticationParameters);
+						dataAccess.addLog("webAuthnManager validated", logLevel);
+						String session = dataAccess.addCompletedCheckForFingerprint(this, browserSession, request);
+						if (session != null) {
+							reason = session;
+							outcome = Outcomes.SUCCESS;
+						}
+					} catch (Exception e) {
+						dataAccess.addLog(e);
+						reason = Constants.SIGNATURE_VALIDATION_FAILED;
 					}
-				} catch (Exception e) {
-					dataAccess.addLog("general exception", e);
-					reason = Constants.SIGNATURE_VALIDATION_FAILED;
+					authDbObj.setSignCount(authenticationData.getAuthenticatorData().getSignCount());
+					dataAccess.updateAuthenticatorByBrowserAndUrl(authDbObj);
+				} catch (DataConversionException e) {
+					dataAccess.addLog(e);
 				}
-				authDbObj.setSignCount(authenticationData.getAuthenticatorData().getSignCount());
-				dataAccess.updateAuthenticatorByBrowserAndUrl(authDbObj);
-			} catch (DataConversionException e) {
-				dataAccess.addLog("data Error", e);
+	
 			}
-
+		} catch (Exception ee) {
+			dataAccess.addLog(ee);
 		}
 		return new ApiResponse(outcome, reason);
 	}

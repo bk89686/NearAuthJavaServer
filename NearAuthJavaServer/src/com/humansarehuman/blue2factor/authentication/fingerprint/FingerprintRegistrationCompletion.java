@@ -88,7 +88,7 @@ public class FingerprintRegistrationCompletion extends B2fApi {
 				dataAccess.addLog(device.getDeviceId(), "authenticator found", logLevel);
 				// Server properties
 				Origin origin = new Origin(request.getHeader("origin"));
-				String rpId = cred.getRpId();
+				String rpId = GeneralUtilities.getNakedDomain(cred.getRpId());
 				dataAccess.addLog(device.getDeviceId(), "rpId: " + rpId, logLevel);
 				Challenge challenge = new DefaultChallenge(authenticator.getChallenge());
 //				byte[] tokenBindingId = new byte[] { 0x01, 0x23, 0x45 };

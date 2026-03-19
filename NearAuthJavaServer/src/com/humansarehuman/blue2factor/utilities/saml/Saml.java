@@ -786,7 +786,7 @@ public class Saml extends BaseController {
 					access.getAccessCode(), Outcomes.UNKNOWN_STATUS, sender);
 
 			dataAccess.addSamlAuthnRequest(samlAuthnRequest);
-			dataAccess.addLog("buildAndSaveAuthnRequestObj", "(1) after addSamlAuthnRequest, sender " + sender, LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("buildAndSaveAuthnRequestObj", "(1) after addSamlAuthnRequest, sender " + sender, LogConstants.TRACE);
 		} else {
 			dataAccess.addLog("buildAndSaveAuthnRequestObj", "accessCode was null", LogConstants.ERROR);
 		}
@@ -844,7 +844,7 @@ public class Saml extends BaseController {
 		AccessCodeDbObj accessCode = new AccessCodeDbObj(GeneralUtilities.randomString(), company.getCompanyId(), null,
 				deviceId, 0, true, browserId, false);
 		dataAccess.addAccessCode(accessCode, "buildAndSaveAuthnRequestObj");
-		dataAccess.addLog("building new Auth request", LogConstants.TEMPORARILY_IMPORTANT);
+		dataAccess.addLog("building new Auth request", LogConstants.TRACE);
 		Timestamp issueInstant = DateTimeUtilities.instantToTimestamp(incomingAuthnRequest.getIssueInstant());
 		samlAuthnRequest = new SamlAuthnRequestDbObj(samlIdp.getIdentityProviderName(), now, samlIdp.getTableId(),
 				outgoingAuthnRequest.getID(), incomingAuthnRequest.getID(), outgoingRelayState, incomingRelayState,
@@ -957,7 +957,7 @@ public class Saml extends BaseController {
 					company.getCompanyId(), groupId, deviceId, browserSession, Outcomes.UNKNOWN_STATUS,
 					authnRequest.getProviderName());
 			dataAccess.addSamlAuthnRequest(samlAuthnRequest);
-			dataAccess.addLog("(2) after addSamlAuthnRequest at " + now + "; group id: " + groupId, LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("(2) after addSamlAuthnRequest at " + now + "; group id: " + groupId, LogConstants.TRACE);
 		} catch (Exception e) {
 			dataAccess.addLog(e);
 		}
@@ -981,7 +981,7 @@ public class Saml extends BaseController {
 				null, false, company.getCompanyId(), groupId, deviceId, "", Outcomes.UNKNOWN_STATUS, sender);
 		SamlDataAccess dataAccess = new SamlDataAccess();
 		dataAccess.addSamlAuthnRequest(samlAuthnRequest);
-		dataAccess.addLog("buildAndSaveAuthnRequestObj", "(3) after addSamlAuthnRequest at " + now, LogConstants.TEMPORARILY_IMPORTANT);
+		dataAccess.addLog("buildAndSaveAuthnRequestObj", "(3) after addSamlAuthnRequest at " + now, LogConstants.TRACE);
 		return samlAuthnRequest;
 	}
 

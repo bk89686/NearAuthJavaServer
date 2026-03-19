@@ -62,7 +62,7 @@ public class GetServerVars extends BaseController {
 		boolean subscribed = false;
 		boolean hasBle = false;
 		DeviceDataAccess dataAccess = new DeviceDataAccess();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		try {
 			String key = getKey(request);
 			String iv = getInitVector(request);
