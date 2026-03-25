@@ -24,9 +24,10 @@ import com.humansarehuman.blue2factor.utilities.Encryption;
 public class GetClientAudience extends SamlAndLdapResponse {
 
 	@RequestMapping(method = { RequestMethod.GET, RequestMethod.POST })
-	public String samlResponseFromAuthnRequest(HttpServletRequest request, HttpServletResponse httpResponse,
+	public String getSamlAudience(HttpServletRequest request, HttpServletResponse httpResponse,
 			ModelMap model, @PathVariable("apiKey") String apiKey) {
 		int outcome = Outcomes.FAILURE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		String audience = "";
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);
@@ -34,6 +35,8 @@ public class GetClientAudience extends SamlAndLdapResponse {
 		String plainText = this.getRequestValue(request, "issuerIdVal");
 		String signature = this.getRequestValue(request, "signature");
 		String siteUrl = this.getRequestValue(request, "requester");
+		dataAccess.addLog("plainText: " + plainText, logLevel);
+		dataAccess.addLog("signature: " + signature, logLevel);
 		if (company != null) {
 			Encryption encryption = new Encryption();
 			if (encryption.verifyWebServerSignature(company, plainText, signature)) {

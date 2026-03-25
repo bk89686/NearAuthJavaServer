@@ -489,13 +489,12 @@ public class Encryption {
 	public boolean verifyWebServerSignature(CompanyDbObj company, String plainText, String signature) {
 		boolean success = false;
 		DataAccess dataAccess = new DataAccess();
-		int logLevel = LogConstants.IMPORTANT;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		try {
-			dataAccess.addLog("key was found for company " + company.getCompanyName(), logLevel);
 			KeyDbObj coPublicKey = dataAccess.getActiveKeyByTypeAndCompanyId(KeyType.WEB_SERVER_PUBLIC_KEY,
 					company.getCompanyId());
 			if (coPublicKey != null) {
-				dataAccess.addLog("using keyText: " + coPublicKey.getKeyText(), logLevel);
+				dataAccess.addLog("key was found for company " + company.getCompanyName(), logLevel);
 				PublicKey publicKey = stringToPublicKey(coPublicKey.getKeyText(), OsClass.LINUX);
 				success = verifySignature(plainText, signature, publicKey, OsClass.LINUX);
 			}
@@ -560,7 +559,7 @@ public class Encryption {
 	private boolean verifySignatureNotApple(DataAccess dataAccess, String plainText, String signature,
 			PublicKey publicKey) {
 		boolean success = false;
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		try {
 			Signature publicSignature = Signature.getInstance("SHA256withRSA");
 			publicSignature.initVerify(publicKey);

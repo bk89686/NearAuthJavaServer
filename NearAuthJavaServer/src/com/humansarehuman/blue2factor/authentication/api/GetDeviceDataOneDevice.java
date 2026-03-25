@@ -77,25 +77,31 @@ public class GetDeviceDataOneDevice extends B2fApi {
 			ModelMap model) {
 		boolean success = false;
 		NearAuthAi nearAuth = new NearAuthAi();
-		if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
-            return "couldNotConfirm";
-        }
-		String newName = this.getRequestValue(request, "popupInput1");
 		String deviceId = this.getRequestValue(request, "did");
-		dataAccess.addLog("deviceId:" + deviceId + ", newName: " + newName, LogConstants.IMPORTANT);
+		String newName = "";
 		DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId);
+		if (device != null) {
+			if (!device.getGroupId().equals(Constants.CHRIS_GROUP_ID)) {	
+				if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
+		            return "couldNotConfirm";
+		        }
+				newName = this.getRequestValue(request, "popupInput1");
+			}
+		}
 		String reason = "";
 		if (device != null) {
-			device.setDeviceType(newName);
-			try {
-				if (!dataAccess.updateDevice(device, "postDeviceDataOneDevice")) {
-					reason = "changing the device name to \"" + newName + "\" failed";
-				} else {
-					success = true;
+			if (!newName.equals("")) {
+				device.setDeviceType(newName);
+				try {
+					if (!dataAccess.updateDevice(device, "postDeviceDataOneDevice")) {
+						reason = "changing the device name to \"" + newName + "\" failed";
+					} else {
+						success = true;
+					}
+				} catch (Exception e) {
+					dataAccess.addLog(e);
+					reason = e.getLocalizedMessage();
 				}
-			} catch (Exception e) {
-				dataAccess.addLog(e);
-				reason = e.getLocalizedMessage();
 			}
 		}
 		if (success) {
@@ -118,13 +124,21 @@ public class GetDeviceDataOneDevice extends B2fApi {
 	@RequestMapping(method = RequestMethod.GET)
 	public String getDeviceDataOneDevice(HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) {
 		NearAuthAi nearAuth = new NearAuthAi();
-		if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
-            return nearAuth.redirectToFailure();
-        }
 		String deviceId = this.getRequestValue(request, "did");
 		DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId);
+		TokenDbObj token = null;
+		boolean demo = false;
 		if (device != null) {
-			TokenDbObj token = this.getPersistentTokenObj(request);
+			if (!device.getGroupId().equals(Constants.CHRIS_GROUP_ID)) {	
+				if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
+					return nearAuth.redirectToFailure();
+				}
+				token = this.getPersistentTokenObj(request);
+			} else {
+				dataAccess.addLog("this is a demo", LogConstants.TEMPORARILY_IMPORTANT);
+				demo = true;
+				token = dataAccess.getDefaultBrowserTokenForChris();
+			}
 			if (token == null) {
 				String browserId = nearAuth.getBrowserId();
 				token = dataAccess.getActiveTokenByOrDescriptionAndTokenId(TokenDescription.BROWSER_TOKEN, browserId);
@@ -137,6 +151,7 @@ public class GetDeviceDataOneDevice extends B2fApi {
 			model.addAttribute("deviceData", deviceData);
 		}
 		model.addAttribute("fromPush", false);
+		model.addAttribute("demo", demo);
 		return "deviceTimeline";
 	}
 

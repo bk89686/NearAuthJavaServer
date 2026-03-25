@@ -77,26 +77,28 @@ public class FingerprintAuthentication extends B2fApi {
 			HttpServletResponse response) throws IOException {
 		FingerprintAuthenticationResponse frResp = new FingerprintAuthenticationResponse("failed", 0, "", null, "");
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		try {
-			dataAccess.addLog("start");
+			dataAccess.addLog("start", logLevel);
 			String browserToken = frReq.getBrowserToken();
-			String origin = GeneralUtilities.getUrlHost(frReq.reqUrl);
-			dataAccess.addLog("browserToken: " + browserToken);
+//			String origin = GeneralUtilities.getUrlHost(frReq.reqUrl);
+			String rpId = GeneralUtilities.getUrlHost(frReq.reqUrl);
+			dataAccess.addLog("browserToken: " + browserToken, logLevel);
 			String credId = frReq.getCredId();
-			dataAccess.addLog("credId: " + credId);
+			dataAccess.addLog("credId: " + credId, logLevel);
 			AuthenticatorDbObj authenticator = dataAccess.getActiveAuthenticatorByCredentialId(credId);
 			if (authenticator != null) {
-				dataAccess.addLog("authicator found");
+				dataAccess.addLog("authicator found", logLevel);
 				TokenDbObj token = dataAccess.getToken(browserToken);
 				if (token != null) {
-					dataAccess.addLog("token found: " + token);
-					frResp = authenticateFingerprint(token, authenticator, frReq, response, credId, origin);
+					dataAccess.addLog("token found: " + token, logLevel);
+					frResp = authenticateFingerprint(token, authenticator, frReq, response, credId, rpId);
 
 				} else {
-					dataAccess.addLog("token not found in db");
+					dataAccess.addLog("token not found in db", LogConstants.WARNING);
 				}
 			} else {
-				dataAccess.addLog("credentialId not found");
+				dataAccess.addLog("credentialId not found", LogConstants.WARNING);
 				frResp.setChallenge(Constants.FINGERPRINT_CREDENTIALS_NOT_FOUND);
 			}
 		} catch (Exception e) {
@@ -108,7 +110,7 @@ public class FingerprintAuthentication extends B2fApi {
 
 	private FingerprintAuthenticationResponse authenticateFingerprint(TokenDbObj token,
 			AuthenticatorDbObj authenticator, FingerprintAuthenticationRequest frReq, HttpServletResponse response,
-			String credId, String origin) {
+			String credId, String rpId) {
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		GeneralUtilities generalUtilities = new GeneralUtilities();
 		FingerprintAuthenticationResponse frResp = null;
@@ -141,7 +143,7 @@ public class FingerprintAuthentication extends B2fApi {
 				authenticator.setChallenge(challenge);
 				dataAccess.updateAuthenticatorByCredId(authenticator);
 				dataAccess.addLog("authenticateFingerprint", "challenge: " + challenge);
-				frResp = new FingerprintAuthenticationResponse(challenge, 180000, origin, acArray, "required");
+				frResp = new FingerprintAuthenticationResponse(challenge, 180000, rpId, acArray, "required");
 			} catch (Exception e) {
 				frResp = new FingerprintAuthenticationResponse("failed", 0, "", null, e.getLocalizedMessage());
 				dataAccess.addLog("authenticateFingerprint", e);

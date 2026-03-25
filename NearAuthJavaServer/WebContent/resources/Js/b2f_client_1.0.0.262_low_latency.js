@@ -83,7 +83,6 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 
 async function startBlue2Factor(){
-	debugger;
     var runB2f = true;
     setEndpoint();
     if (!alreadyRunning) {

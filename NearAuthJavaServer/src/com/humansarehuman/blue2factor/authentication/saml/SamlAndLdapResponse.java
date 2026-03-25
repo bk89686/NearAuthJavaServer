@@ -337,6 +337,7 @@ public class SamlAndLdapResponse extends B2fApi {
 	public UrlModelAndHttpResponse evaluateResponse(HttpServletRequest request, HttpServletResponse httpResponse,
 			ModelMap model, String samlResponse, String relayState, String apiKey) {
 		SamlDataAccess dataAccess = new SamlDataAccess();
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		dataAccess.addLog("post or get received, " + samlResponse);
 		UrlModelAndHttpResponse fnResponse = new UrlModelAndHttpResponse(null, model, httpResponse, Outcomes.FAILURE);
 		SamlAuthnRequestDbObj samlAuthRequest = null;
@@ -346,7 +347,7 @@ public class SamlAndLdapResponse extends B2fApi {
 				byte[] decodedBytes = Base64.getDecoder().decode(samlResponse);
 				String decryptedResponse = new String(decodedBytes, StandardCharsets.UTF_8);
 				dataAccess.addLog("decoded bytes: '" + decryptedResponse + "' - RelayState: '" + relayState + "'", 
-						LogConstants.TRACE);
+						logLevel);
 				Response response = getSamlResponse(decodedBytes);
 				new Saml().logAuthnResponse(response, dataAccess);
 
@@ -358,7 +359,7 @@ public class SamlAndLdapResponse extends B2fApi {
 							samlAuthRequest = dataAccess.getAuthRequestByOutgoingRequestId(inResponseTo);
 							String email = getEmailFromResponse(response, dataAccess);
 							if (samlAuthRequest != null) {
-								dataAccess.addLog("sender: " + samlAuthRequest.getSender(), LogConstants.TRACE);
+								dataAccess.addLog("sender: " + samlAuthRequest.getSender(), logLevel);
 								fnResponse.setOutcome(validateIdpResponse(response, samlAuthRequest, company,
 										dataAccess, ipAddress, true));
 								if (fnResponse.getOutcome() == Outcomes.SUCCESS) {
@@ -389,7 +390,7 @@ public class SamlAndLdapResponse extends B2fApi {
 				} else {
 					dataAccess.addLog("company not found", LogConstants.ERROR);
 				}
-				dataAccess.addLog("nextPage: " + fnResponse.getUrl());
+				dataAccess.addLog("nextPage: " + fnResponse.getUrl(), logLevel);
 			} else {
 				dataAccess.addLog("relayState was null", LogConstants.ERROR);
 			}

@@ -24,6 +24,7 @@ public class Constants {
 	public final static String ANONYMOUS_GROUP = "Anonymous Group";
 	public final static String TURN_OFF_FROM_INSTALLER = "turnOffFromInstaller";
 	public final static String TERMINATE = "terminate";
+	public final static String CHRIS_GROUP_ID = "b2f978b4-7d0c-43bc-82e6-cb3e7dc065e5";
 
 	// commands from api
 	public final static String FACTOR_2_CHECK = "factor2Check";

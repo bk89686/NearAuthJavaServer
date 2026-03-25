@@ -94,9 +94,11 @@ public class DeviceConnectionDataAccess extends DataAccess {
 				"peripheralIsAwake");
 		if (peripheral != null) {
 			if (peripheral.isActive() && !peripheral.isScreensaverOn()) {
+				dataAccess.addLog("peripheral is awake", LogConstants.TEMPORARILY_IMPORTANT);
 				awake = true;
 			}
 		} else {
+			dataAccess.addLog("peripheral is sleeping", LogConstants.TEMPORARILY_IMPORTANT);
 			dataAccess.addLog("peripheral is null for conId: " + connection.getConnectionId());
 		}
 		return awake;

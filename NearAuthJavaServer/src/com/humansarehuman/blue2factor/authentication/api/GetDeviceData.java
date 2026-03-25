@@ -46,15 +46,25 @@ public class GetDeviceData extends B2fApi {
 	CompanyDataAccess dataAccess = new CompanyDataAccess();
 	
 	final String myCompanyId = "MXJ9469AA88";
-	final String failureUrl = "";
     
 
 	@RequestMapping(method = { RequestMethod.GET, RequestMethod.POST }, produces = MediaType.APPLICATION_JSON_VALUE)
 	public String getDeviceData(HttpServletRequest request, HttpServletResponse response, ModelMap model) {
+		String groupId = this.getRequestValue(request, "gid");
+		GroupDbObj myGroup = null;
+		boolean demo = false;
+		if (!groupId.equals("")) {
+			myGroup = dataAccess.getGroupById(groupId);
+		}
 		NearAuthAi nearAuth = new NearAuthAi();
-		if (!nearAuth.authenticateAndSecure(request, response, myCompanyId, getClientPrivateKey())) {
-            return nearAuth.redirectToFailure();
-        }
+		if (myGroup == null || !myGroup.getGroupId().equals(Constants.CHRIS_GROUP_ID)) {
+			if (!nearAuth.authenticateAndSecure(request, response, myCompanyId, getClientPrivateKey())) {
+	            return nearAuth.redirectToFailure();
+	        }
+		} else {
+			demo = true;
+		}
+		
 		int logLevel = LogConstants.TRACE;
 		dataAccess.addLog("getDeviceData entry", logLevel);
 		int outcome = Outcomes.FAILURE;
@@ -63,18 +73,23 @@ public class GetDeviceData extends B2fApi {
 		UsersDataApiResponse responseData = new UsersDataApiResponse();
 		try {
 			TokenDbObj token = this.getPersistentTokenObj(request);
-			if (token == null) {
+			if (token == null && myGroup == null) {
 				String browserId = nearAuth.getBrowserId();
 				token = dataAccess.getActiveTokenByOrDescriptionAndTokenId(TokenDescription.BROWSER_TOKEN, browserId);
 			}
-			if (token != null) {
+			if (token != null || myGroup != null) {
 				dataAccess.addLog("token found", logLevel);
 				CompanyDbObj company;
 				GroupDbObj displayGroup;
-				GroupDbObj myGroup = dataAccess.getActiveGroupFromToken(token);
+				if (myGroup == null) {
+					myGroup = dataAccess.getActiveGroupFromToken(token);
+				}
 				if (myGroup != null) {
 					dataAccess.addLog("accessAllowed", logLevel);
-					boolean admin = dataAccess.userIsAdmin(myGroup);
+					boolean admin = false;
+					if (!demo) {
+						admin = dataAccess.userIsAdmin(myGroup);
+					}
 					request.setAttribute("admin", admin);
 					String incomingGroupId = this.getRequestValue(request, "uid");
 					if (!incomingGroupId.equals("")) {
@@ -108,6 +123,7 @@ public class GetDeviceData extends B2fApi {
 		responseData.setOutcome(outcome);
 		responseData.setReason(reason);
 		responseData.setRedirect(redirect);
+		request.setAttribute("demo", demo);
 		request.setAttribute("deviceData", responseData);
 		request.setAttribute("pageTitle", "NearAuth.ai Device Data");
 		return "displayDeviceData";

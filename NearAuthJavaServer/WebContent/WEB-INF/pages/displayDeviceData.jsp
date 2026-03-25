@@ -8,17 +8,15 @@
     <meta http-equiv="refresh" content="180">
     <title>Device Information</title>
     <style>
+    	@font-face {
+			font-family: logoText;
+			font-style: normal;
+			src: url(/fonts/DidotTitle.otf);
+		}
     	body {
     		padding: 50px;
     	}
-    	@media screen and (max-width: 600px) {
-	    	body {
-	    		padding: 15px;
-	    	}
-	    	.hideMobile {
-	    		display: none;
-	    	}
-    	}
+    	
         table {
             border-collapse: collapse;
             width: 100%;
@@ -34,6 +32,29 @@
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
+        }
+        
+        #branding_row {
+        	text-align:center;
+        	height: 200px;
+        }
+        
+        .branding_text {
+        	margin-left:auto;
+        	margin-right:auto;
+        	padding-top:20px;
+        	font-family: logoText;
+        	font-size: 1.9em;
+        	font-weight: bold;
+        }
+        
+        .logoImage {
+        	height:116px;
+        }
+        
+        .branding_image {
+        	margin-left:auto;
+        	margin-right:auto;
         }
         
         .connected {
@@ -92,10 +113,37 @@
         	margin:66px 20px 20px 0px;
         	padding: 20px;
         }
+        @media screen and (max-width: 600px) {
+	    	body {
+	    		padding: 15px;
+	    	}
+	    	.hideMobile {
+	    		display: none;
+	    	}
+    	}
+    	@media screen and (max-width: 480px) {
+    		body {
+	    		padding: 2.5%;
+	    		width: 100%
+	    	}
+	    	#searchTime {
+			    width: 82%;
+			    margin: 60px 4% 0px 4%;
+    		}
+    		
+    		#submitTime {
+			    left: 50%;
+			    margin-top: 20px;
+			}
+    	}
     </style>
+    <!--<link rel="stylesheet" href="/css/deviceData_1.0.0.1.css">-->
 </head>
 <body>
-    
+    <div id='branding_row'>
+		<div class='branding_image'><img src='/imgFiles/NearAuthLogoSquircle3d.svg' class='logoImage'></div>
+		<div class='branding_text'>NearAuth.ai</div>
+	</div>
     <c:if test="${deviceData.outcome == 1}">
     	<h2>Something went awry</h2>
     	<p>${deviceData.reason}</p>
@@ -237,6 +285,8 @@
 		}
     </script>
     <script src="/js/b2f_device_data_search_1.0.0.19.js"></script>
-    <%@ include file="footerClient.jsp" %>
+    <c:if test="${demo == false}">
+    	<%@ include file="footerClient.jsp" %>
+    </c:if>
 </body>
 </html>

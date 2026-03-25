@@ -1151,7 +1151,7 @@ public class CompanyDataAccess extends GroupDataAccess {
 		return getCompanyByToken(token, true);
 	}
 
-	private CompanyDbObj getCompanyByToken(String token, boolean notExpired) {
+	public CompanyDbObj getCompanyByToken(String token, boolean notExpired) {
 		CompanyDbObj company = null;
 		String now = DateTimeUtilities.getLastTimestampString();
 		String query = "SELECT co.* FROM B2F_TOKEN tk JOIN B2F_GROUP gp on tk.GROUP_ID = gp.GROUP_ID "

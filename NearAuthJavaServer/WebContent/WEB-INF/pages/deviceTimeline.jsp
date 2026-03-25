@@ -8,6 +8,11 @@
 	<meta http-equiv="refresh" content="180">
     <title>Device Timeline</title>
     <style>
+	    @font-face {
+			font-family: logoText;
+			font-style: normal;
+			src: url(/fonts/DidotTitle.otf);
+		}
     	body {
     		padding-top: 100px;
     		padding-left: 150px;
@@ -204,8 +209,32 @@
         	position: relative;
         	height: 200px;
         }
+        
         #backLink {
 
+        }
+        
+        #branding_row {
+        	text-align:center;
+        	height: 200px;
+        }
+        
+        .branding_text {
+        	margin-left:auto;
+        	margin-right:auto;
+        	padding-top:20px;
+        	font-family: logoText;
+        	font-size: 1.9em;
+        	font-weight: bold;
+        }
+        
+        .logoImage {
+        	height:116px;
+        }
+        
+        .branding_image {
+        	margin-left:auto;
+        	margin-right:auto;
         }
         
         .popupObj {
@@ -291,9 +320,19 @@
     <%@ include file="header.jsp" %>
 </head>
 <body>
-	<a id='backLink' href='/deviceData'>&lt;- Back </a>
+	<c:if test="${demo == false}">
+		<a id='backLink' href='/deviceData'>
+			&lt;- Back 
+		</a>
+	</c:if>
+	<div id='branding_row'>
+		<div class='branding_image'><img src='/imgFiles/NearAuthLogoSquircle3d.svg' class='logoImage'></div>
+		<div class='branding_text'>NearAuth.ai</div>
+	</div>
     <h2>Connection Information for ${username} on ${deviceData.deviceType}</h2>
-    <button id='renameButton' class='popupButton'>Rename device</button>
+    <c:if test="${demo == false}">
+    	<button id='renameButton' class='popupButton'>Rename device</button>
+    </c:if>
     <h5>Central type: ${deviceData.centralType}</h5>
     <c:if test="${deviceData.outcome == 1}">
     	<p>${deviceData.reason}</p>
@@ -411,24 +450,29 @@
 	    </c:forEach>
 	    <div class='bottomSpacer'></div>
 	    <input type="hidden" id="fromPush" value="${fromPush}">
-	    <div id='popup' class='popup'>
-		    <div id='popupIcon'></div>
-		    <div id='popupX'>x</div>
-		    <div id='popupTitle'>Rename ${deviceData.deviceType}</div>
-		    <form method='POST' id='renameForm' action='/shaneshuenhthubisa?did=${deviceData.deviceId}'>
-		        <div class='popupInputRow' id='popupInputRow1'>
-		        	<span id='popupInputLabel1'>New name: </span>
-		            <input type='text' class='popupInput' id='popupInput1' name='popupInput1'/>
-		        </div>
-		     	<input type='hidden' id='did' name='did' value='${deviceData.deviceId}'/>
-		        <div id='popupButtons'>
-		            <button class='popupButton' id='popupCancel'>Cancel</button>
-		            <button class='popupButton' id='popupOk' >OK</button>
-		        </div>
-		    </form>
-		</div>
+	    <c:if test="${demo == false}">
+		    <div id='popup' class='popup'>
+			    <div id='popupIcon'></div>
+			    <div id='popupX'>x</div>
+			    <div id='popupTitle'>Rename ${deviceData.deviceType}</div>
+			    <form method='POST' id='renameForm' action='/shaneshuenhthubisa?did=${deviceData.deviceId}'>
+			        <div class='popupInputRow' id='popupInputRow1'>
+			        	<span id='popupInputLabel1'>New name: </span>
+			            <input type='text' class='popupInput' id='popupInput1' name='popupInput1'/>
+			        </div>
+			     	<input type='hidden' id='did' name='did' value='${deviceData.deviceId}'/>
+			        <div id='popupButtons'>
+			            <button class='popupButton' id='popupCancel'>Cancel</button>
+			            <button class='popupButton' id='popupOk' >OK</button>
+			        </div>
+			    </form>
+			</div>
+		</c:if>
 		<div id='cover'></div>
     </c:if>
-    <script src="/js/b2f_device_timeline_1.0.0.7.js"></script>
+    <script src="/js/b2f_device_timeline_1.0.0.8.js"></script>
+    <c:if test="${demo == false}">
+    	<%@ include file="footerClient.jsp" %>
+    </c:if>
 </body>
 </html>

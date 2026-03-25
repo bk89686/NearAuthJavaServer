@@ -2,19 +2,21 @@ document.addEventListener("DOMContentLoaded", function(){
 	hideNowIfNeeded();
 	refreshPost();
 	const rename = document.getElementById("renameButton");
-	rename.onclick = function() {
-		showPopup();
-		const input = document.getElementById("popupInput1");
-		input.focus();
-		input.addEventListener('keypress', function(event) {
-			if (event.key === 'Enter') {
-				event.preventDefault();
-				if (document.getElementById("popupInput1").value.trim()) {
-					document.getElementById("popupInput1").value = document.getElementById("popupInput1").value.trim()
-					document.getElementById("renameForm").submit();
+	if (rename) {
+		rename.onclick = function() {
+			showPopup();
+			const input = document.getElementById("popupInput1");
+			input.focus();
+			input.addEventListener('keypress', function(event) {
+				if (event.key === 'Enter') {
+					event.preventDefault();
+					if (document.getElementById("popupInput1").value.trim()) {
+						document.getElementById("popupInput1").value = document.getElementById("popupInput1").value.trim()
+						document.getElementById("renameForm").submit();
+					}
 				}
-			}
-		})
+			})
+		}
 	}
 });
 

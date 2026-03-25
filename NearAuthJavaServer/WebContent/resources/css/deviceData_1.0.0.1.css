@@ -1,0 +1,329 @@
+/* ============================================================
+   NearAuth.ai — deviceData page styles
+   Matches the brand aesthetic from nearauth.ai
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* ── CSS Variables ── */
+:root {
+  --bg-base:        #080c14;
+  --bg-surface:     #0e1522;
+  --bg-card:        #131c2e;
+  --bg-card-hover:  #192236;
+  --border:         rgba(99, 179, 237, 0.12);
+  --border-accent:  rgba(99, 179, 237, 0.35);
+
+  --text-primary:   #e8edf5;
+  --text-secondary: #8ba3c4;
+  --text-muted:     #4a6280;
+
+  --accent:         #3b82f6;        /* blue */
+  --accent-glow:    rgba(59, 130, 246, 0.25);
+  --accent-bright:  #60a5fa;
+  --success:        #34d399;
+  --success-dim:    rgba(52, 211, 153, 0.15);
+
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+
+  --font-ui:   'Sora', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+/* ── Reset / Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59,130,246,0.12) 0%, transparent 70%),
+    var(--bg-base);
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* ── Page wrapper ── */
+.container,
+main,
+#root,
+[class*="container"],
+[class*="wrapper"],
+[class*="page"] {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ── Headings ── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #e8edf5 30%, var(--accent-bright));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 28px;
+}
+
+h2 { font-size: 1.4rem; margin-bottom: 20px; }
+h3 { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 12px; }
+h4, h5 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 10px; }
+
+/* ── Section card ── */
+section,
+.section,
+.card,
+[class*="section"] {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+section::before,
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(59,130,246,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ── Table ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  font-family: var(--font-ui);
+}
+
+thead tr {
+  border-bottom: 1px solid var(--border-accent);
+}
+
+thead th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+
+tbody tr:last-child { border-bottom: none; }
+
+tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+tbody td {
+  padding: 12px 14px;
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
+/* First column (device name) stands out */
+tbody td:first-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Boolean "true" / "false" badges */
+tbody td {
+  font-family: var(--font-mono);
+  font-size: 0.83rem;
+}
+
+/* Links in table */
+table a {
+  color: var(--accent-bright);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+
+table a:hover {
+  border-bottom-color: var(--accent-bright);
+}
+
+/* ── Form inputs ── */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+select,
+textarea {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: auto;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+input::placeholder { color: var(--text-muted); }
+
+label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* ── Checkbox / toggle ── */
+input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* ── Buttons ── */
+button,
+input[type="submit"],
+input[type="button"],
+a[role="button"] {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 9px 20px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 0 16px rgba(59,130,246,0.3);
+}
+
+button:hover,
+input[type="submit"]:hover {
+  background: var(--accent-bright);
+  box-shadow: 0 0 24px rgba(96,165,250,0.45);
+  transform: translateY(-1px);
+}
+
+button:active { transform: translateY(0); }
+
+/* Secondary / outline buttons */
+button.secondary,
+button[data-variant="secondary"] {
+  background: transparent;
+  border: 1px solid var(--border-accent);
+  color: var(--accent-bright);
+  box-shadow: none;
+}
+
+button.secondary:hover {
+  background: rgba(59,130,246,0.1);
+  box-shadow: none;
+}
+
+/* ── "Connected" status indicators ── */
+td[data-connected="true"],
+td:has(> span.connected) {
+  color: var(--success);
+}
+
+/* Inline true/false colouring via content sniff */
+tbody td:nth-child(2) {
+  color: var(--success);
+}
+
+/* ── Timestamp / mono values ── */
+time,
+.timestamp,
+[class*="time"],
+[class*="date"] {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+/* ── Dividers ── */
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+
+/* ── Paragraph text ── */
+p {
+  color: var(--text-secondary);
+  font-size: 0.93rem;
+  margin-bottom: 12px;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Small glowing header accent line ── */
+h1::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+  border-radius: 2px;
+  margin-top: 12px;
+  -webkit-text-fill-color: initial; /* reset so pseudo inherits normally */
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  h1 { font-size: 1.45rem; }
+
+  section,
+  .card { padding: 20px 16px; }
+
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  thead th,
+  tbody td { padding: 10px 10px; }
+}

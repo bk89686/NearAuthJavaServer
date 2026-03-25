@@ -2849,11 +2849,6 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		} else {
 			if (!connected) {
 				this.addLog("conn change for central to connected = " + connected, LogConstants.IMPORTANT);
-				this.logCurrentStackTrace(device.getDeviceId(), "validateWithConnectionLog");
-//				ArrayList<DeviceConnectionDbObj> connections = this.getConnectionsForCentral(device);
-//				for (DeviceConnectionDbObj connection : connections) {
-//					validateWithConnectionLog(connection, device, false, null);
-//				}
 			}
 		}
 	}
@@ -2919,7 +2914,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 					}
 				} else {
 					if (connLog != null && connLog.isConnected() && !added) {
-						addLog(device.getDeviceId(), "we're asleep", LogConstants.TRACE);
+						addLog(device.getDeviceId(), "we're asleep, but I don't think we should get here", LogConstants.IMPORTANT);
 						ConnectionLogDbObj connectionLog = new ConnectionLogDbObj(connection.getConnectionId(), null,
 								false, ts, connection.getPeripheralDeviceId(), "screenSaver on", null);
 						this.addConnectionLog(connectionLog);
@@ -4283,6 +4278,38 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		return device;
 	}
 
+	public DeviceDbObj getDeviceByTokenIgnoreExpiration(String token, String src) {
+		DeviceDbObj device = null;
+
+		String query = "SELECT device.* FROM B2F_TOKEN token JOIN B2F_DEVICE device "
+				+ "ON token.DEVICE_ID = device.DEVICE_ID WHERE token.TOKEN_ID = ?";
+		Connection conn = null;
+		PreparedStatement prepStmt = null;
+		ResultSet rs = null;
+		try {
+			conn = MySqlConn.getConnection();
+			prepStmt = conn.prepareStatement(query);
+			prepStmt.setString(1, token);
+			rs = executeQuery(prepStmt);
+			if (rs.next()) {
+				device = this.recordToDevice(rs);
+				this.addLog("device was set");
+			}
+			String srcStr;
+			if (!TextUtils.isEmpty(src)) {
+				srcStr = " -- from: " + src;
+			} else {
+				srcStr = " -- source not given";
+			}
+			this.addLog("found: " + (device != null) + srcStr);
+		} catch (Exception e) {
+			this.addLog("getDeviceByToken", e);
+		} finally {
+			MySqlConn.close(rs, prepStmt, conn);
+		}
+		return device;
+	}
+	
 	public DeviceDbObj getDeviceByToken(String token, String src) {
 		DeviceDbObj device = null;
 		String now = DateTimeUtilities.getLastTimestampString();

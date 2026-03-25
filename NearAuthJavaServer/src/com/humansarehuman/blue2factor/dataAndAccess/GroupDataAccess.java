@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import org.apache.http.util.TextUtils;
 
+import com.humansarehuman.blue2factor.constants.Constants;
 import com.humansarehuman.blue2factor.constants.LogConstants;
 import com.humansarehuman.blue2factor.entities.enums.DeviceClass;
 import com.humansarehuman.blue2factor.entities.enums.TokenDescription;
@@ -80,6 +81,34 @@ public class GroupDataAccess extends DeviceDataAccess {
 			group = getActiveGroupByDeviceId(token.getDeviceId());
 		}
 		return group;
+	}
+	
+	public TokenDbObj getDefaultBrowserTokenForChris() {
+		TokenDbObj token = null;
+		String query = "SELECT * FROM B2F_TOKEN WHERE GROUP_ID = ? AND DESCRIPTION = ? AND "
+				+ "EXPIRE_TIME > ? ORDER BY EXPIRE_TIME DESC LIMIT 1";
+		Connection conn = null;
+		PreparedStatement prepStmt = null;
+		ResultSet rs = null;
+		try {
+			conn = MySqlConn.getConnection();
+			prepStmt = conn.prepareStatement(query);
+			prepStmt.setString(1, Constants.CHRIS_GROUP_ID);
+			prepStmt.setString(2, TokenDescription.BROWSER_TOKEN.toString());
+			prepStmt.setTimestamp(3, DateTimeUtilities.getCurrentTimestamp());
+			this.logQueryImportant(query, prepStmt);
+			rs = executeQuery(prepStmt);
+			
+			if (rs.next()) {
+				token = this.recordToToken(rs);
+			}
+		} catch (SQLException e) {
+			this.addLog("getGroupById", e);
+		} finally {
+			MySqlConn.close(rs, prepStmt, conn);
+		}
+		
+		return token;
 	}
 
 	public GroupDbObj getGroupByDeviceId(String deviceId) {

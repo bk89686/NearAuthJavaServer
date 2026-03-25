@@ -159,6 +159,7 @@ public class Failure extends B2fApi {
 			CompanyDataAccess dataAccess) {
 		String audience = idObj.getCompany().getCompleteCompanyLoginUrl();
 //		String ourIssuerStr = Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", idObj.getCompany().getApiKey());
+		dataAccess.addLog("audience: " + audience, LogConstants.TEMPORARILY_IMPORTANT);
 		String jwt = new JsonWebToken().buildJwt(idObj, audience);
 		model.addAttribute("submitUrl", submitUrl);
 		model.addAttribute("jwt", jwt);

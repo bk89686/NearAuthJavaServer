@@ -4381,15 +4381,15 @@ public class DataAccess extends DeviceFields {
 
 	public boolean addCompletedCheckForFingerprint(String instanceId, Timestamp expiration) {
 		DeviceDataAccess dataAccess = new DeviceDataAccess();
-		addLog("addCompletedCheckForFingerprint", "adding record", LogConstants.TRACE);
-		DeviceDbObj device = dataAccess.getDeviceByToken(instanceId, "addCompletedCheckForFingerprint");
+		addLog("adding record", LogConstants.TEMPORARILY_IMPORTANT);
+		DeviceDbObj device = dataAccess.getDeviceByTokenIgnoreExpiration(instanceId, "addCompletedCheckForFingerprint");
 		return addCompletedCheckForFingerprint(device, instanceId, expiration, dataAccess);
 	}
 
 	public boolean addCompletedCheckForFingerprint(IdentityObjectFromServer idObj, Timestamp expiration) {
 		boolean success = false;
 		DeviceDataAccess dataAccess = new DeviceDataAccess();
-		addLog("addCompletedCheckForFingerprint", "adding record");
+		addLog("adding record", LogConstants.TEMPORARILY_IMPORTANT);
 
 		DeviceDbObj device = idObj.getDevice();
 		if (device != null) {
@@ -4403,11 +4403,11 @@ public class DataAccess extends DeviceFields {
 	public boolean addCompletedCheckForFingerprint(DeviceDbObj device, String instanceId, Timestamp expiration,
 			DeviceDataAccess dataAccess) {
 		boolean success = false;
-		dataAccess.addLog("adding record", LogConstants.TRACE);
+		dataAccess.addLog("adding record", LogConstants.TEMPORARILY_IMPORTANT);
 		String checkId = GeneralUtilities.randomString();
 		Timestamp now = DateTimeUtilities.getCurrentTimestamp();
 		if (device != null) {
-			dataAccess.addLog("addCompletedCheckForFingerprint", "device found", LogConstants.TRACE);
+			dataAccess.addLog("device found", LogConstants.TEMPORARILY_IMPORTANT);
 			try {
 				String centralId = null;
 				String perfId = null;
@@ -4424,12 +4424,12 @@ public class DataAccess extends DeviceFields {
 						device.getDeviceId(), "addCompletedCheckForFingerprint", ConnectionType.PASSKEY);
 				dataAccess.addConnectionLog(connLog);
 				success = true;
-				dataAccess.addLog(device.getDeviceId(), "adding record complete", LogConstants.TRACE);
+				dataAccess.addLog(device.getDeviceId(), "adding record complete", LogConstants.TEMPORARILY_IMPORTANT);
 			} catch (Exception e) {
 				dataAccess.addLog(e);
 			}
 		} else {
-			dataAccess.addLog(instanceId, "device not found", LogConstants.WARNING);
+			dataAccess.addLog("device not found", LogConstants.WARNING);
 		}
 		return success;
 	}
@@ -4653,6 +4653,8 @@ public class DataAccess extends DeviceFields {
 		}
 		return token;
 	}
+	
+	
 	
 	public TokenDbObj getActiveTokenByOrDescriptionAndTokenId(TokenDescription desc, 
 			String tokenId) {
@@ -4974,7 +4976,7 @@ public class DataAccess extends DeviceFields {
 		return browser;
 	}
 
-	private TokenDbObj recordToToken(ResultSet rs) {
+	protected TokenDbObj recordToToken(ResultSet rs) {
 		TokenDbObj token = null;
 		try {
 			String groupId = rs.getString("GROUP_ID");

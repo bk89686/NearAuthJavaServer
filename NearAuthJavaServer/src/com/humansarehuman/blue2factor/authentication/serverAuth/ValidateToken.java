@@ -158,6 +158,7 @@ public class ValidateToken extends B2fApi {
 	private AccessAllowedWithAccessType validateWithJwt(HttpServletRequest request, HttpServletResponse httpResponse,
 			String authToken, CompanyDbObj company, SamlDataAccess dataAccess) {
 		String jwtToken = null;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		AccessAllowedWithAccessType apiResponse = new AccessAllowedWithAccessType(false, 
 				ConnectionType.NONE, DateTimeUtilities.getCurrentTimestamp(), "", "");
 		try {
@@ -167,18 +168,20 @@ public class ValidateToken extends B2fApi {
 				String jwtStr = authTokenArr[0];
 				String signature = authTokenArr[1];
 				if (jwt.validateSignedJwt(company, jwtStr, signature, true)) {
+					dataAccess.addLog("validated", logLevel);
 					jwtToken = jwt.getJwtTokenId();
 					DeviceDbObj device = dataAccess.getActiveDeviceByToken(jwtToken, "validateWithJwt");
 					BrowserDbObj browser = dataAccess.getBrowserByActiveToken(jwtToken, TokenDescription.JWT);
 					if (browser != null && device != null) {
 						if (device.getSignedIn()) {
+							
 							IdentityObjectFromServer idObj = new IdentityObjectFromServer(browser, false);
 							JsonWebToken jwtBuilder = new JsonWebToken();
 							apiResponse = dataAccess.isAccessAllowedWithConnectionMethod(device, "validateWithJwt", false);
 							if (apiResponse.isAccessAllowed()) {
-								dataAccess.addLog("access was allowed", LogConstants.TRACE);
+								dataAccess.addLog("access was allowed", logLevel);
 								if (!browser.isExpired()) {
-									dataAccess.addLog("browser was not expired", LogConstants.TRACE);
+									dataAccess.addLog("browser was not expired", logLevel);
 									String audience = company.getCompleteCompanyLoginUrl();
 									apiResponse.setToken(jwtBuilder.buildJwtForServer(idObj, audience));
 								} else {

@@ -68,7 +68,6 @@ public class BluetoothConnected extends BaseController {
 										"the peripheral_id was blank in the connection table. We are going to update it, "
 												+ "but this could represent a small security hole.",
 										LogConstants.WARNING);
-								;
 								dataAccess.updateDeviceAwake(connection, device, computerAwake, true);
 								handleConnectionUpdate(request, key, iv, dataAccess, connection, device,
 										peripheralReference, connected, src);

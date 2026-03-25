@@ -57,23 +57,34 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 	}
 
 	@RequestMapping(method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ApiResponse postJson(@RequestBody FingerprintAuth auth, HttpServletRequest request,
+	public @ResponseBody ApiResponse authCompletionPostJson(@RequestBody FingerprintAuth auth, HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		ApiResponse apiResponse;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
-		dataAccess.addLog("auth: " + auth.toString(), logLevel);
-		String browserSession = auth.getBrowserSession();
-
-		dataAccess.addLog("b2fSession: " + browserSession, logLevel);
-		String reqUrl = auth.getReqUrl();
-		dataAccess.addLog("FingerprintAuthenticationCompletion", "reqUrl: " + reqUrl + "; ", logLevel);
-		CompanyDbObj company = dataAccess.getCompanyByToken(browserSession);
-		if (this.doesUrlMatchRegex(company, reqUrl, dataAccess) != "") {
-			response = new GeneralUtilities().setResponseHeader(response, reqUrl);
-			apiResponse = handleFingerprintCompletion(request, auth);
-		} else {
-			apiResponse = new ApiResponse(Outcomes.FAILURE, Constants.COMPANY_URL_MISMATCH);
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		try {
+			
+			dataAccess.addLog("auth: " + auth.toString(), logLevel);
+			String browserSession = auth.getBrowserSession();
+	
+			dataAccess.addLog("b2fSession: " + browserSession, logLevel);
+			String reqUrl = auth.getReqUrl();
+			dataAccess.addLog("reqUrl: " + reqUrl + "; ", logLevel);
+			CompanyDbObj company = dataAccess.getCompanyByToken(browserSession, false);
+			if (company != null) {
+				if (this.doesUrlMatchRegex(company, reqUrl, dataAccess) != "") {
+					response = new GeneralUtilities().setResponseHeader(response, reqUrl);
+					apiResponse = handleFingerprintCompletion(request, auth);
+				} else {
+					dataAccess.addLog("urlFailed", logLevel);
+					apiResponse = new ApiResponse(Outcomes.FAILURE, Constants.COMPANY_URL_MISMATCH);
+				}
+			} else {
+				apiResponse = new ApiResponse(Outcomes.FAILURE, Constants.COMPANY_NOT_FOUND);
+			}
+		} catch (Exception e) {
+			dataAccess.addLog(e);
+			apiResponse = new ApiResponse(Outcomes.FAILURE, e.getLocalizedMessage());
 		}
 		return apiResponse;
 	}
@@ -100,7 +111,7 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 	
 			String url = auth.getReqUrl();
 			Origin origin = new Origin(GeneralUtilities.getUrlProtocolAndHost(url));
-			String rpId = GeneralUtilities.getNakedDomain(url);
+			String rpId = GeneralUtilities.getUrlHost(url);
 			AuthenticatorDbObj authDbObj = dataAccess.getActiveAuthenticatorByCredentialId(credIdStr);
 			if (authDbObj != null) {
 				dataAccess.addLog("authDbObj found for: " + credIdStr, logLevel);
@@ -144,7 +155,6 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 				} catch (DataConversionException e) {
 					dataAccess.addLog(e);
 				}
-	
 			}
 		} catch (Exception ee) {
 			dataAccess.addLog(ee);

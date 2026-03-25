@@ -93,7 +93,7 @@ public class JsonWebToken {
 	public String buildJwt(IdentityObjectFromServer idObj, String audience, Date expire) {
 		String jwt = null;
 		DataAccess dataAccess = new DataAccess();
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		try {
 			DeviceDbObj device = idObj.getDevice();
 			CompanyDbObj company = idObj.getCompany();
