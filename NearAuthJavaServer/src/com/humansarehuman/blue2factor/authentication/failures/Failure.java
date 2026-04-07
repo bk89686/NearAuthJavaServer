@@ -209,12 +209,14 @@ public class Failure extends B2fApi {
 		String src = this.getSession(request, "referrer");
 		if (TextUtils.isEmpty(src)) {
 			src = this.getSession(request, "url");
-			if (src.endsWith("?")) {
-				src = src.substring(0, src.length() - 1);
+			if (src != null) {
+				if (src.endsWith("?")) {
+					src = src.substring(0, src.length() - 1);
+				}
 			}
-			if (TextUtils.isEmpty(src)) {
-				src = company.getCompleteCompanyLoginUrl();
-			}
+		} 
+		if (TextUtils.isEmpty(src)) {
+			src = company.getCompleteCompanyLoginUrl();
 		}
 		if (!dataAccess.urlMatchesCompany(company, src)) {
 			dataAccess.addLog("trying to set up on bad url " + src, LogConstants.ERROR);

@@ -43,7 +43,7 @@ public class BrowserInstallation extends B2fApi {
 	public Object browserInstallationGet(HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) {
 		String resp = "setupFailure";
 		String accessCode = this.getRequestValue(request, "b2fid");
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		SamlDataAccess dataAccess = new SamlDataAccess();
 
 		boolean bleFailed = this.getRequestValueBoolean(request, "bf", false);
@@ -148,7 +148,7 @@ public class BrowserInstallation extends B2fApi {
 			DeviceDbObj device, CompanyDbObj company, AccessCodeDbObj accessCode, ModelMap model,
 			SamlDataAccess dataAccess) {
 		String next = "";
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		UrlModelAndHttpResponse urlModelAndHttpResponse;
 		BrowserDbObj browser = dataAccess.addBrowser(device, "installB2fForBrowser");
 		if (didWeJustAuthenticateOnInstall(device, dataAccess)) {
@@ -181,7 +181,7 @@ public class BrowserInstallation extends B2fApi {
 				}
 			} catch (Exception e) {
 				dataAccess.addLog(e);
-				urlModelAndHttpResponse.setUrl("/genericFailure?src=" + company.getCompanyCompletionUrl());
+				urlModelAndHttpResponse.setUrl("/setupFailure?src=" + company.getCompanyCompletionUrl());
 			}
 		}
 		return urlModelAndHttpResponse;

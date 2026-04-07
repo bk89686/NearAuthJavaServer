@@ -33,10 +33,6 @@ import com.humansarehuman.blue2factor.utilities.JsonUtilities;
 
 public class PushNotifications {
 	@SuppressWarnings("ucd")
-	final static String serverApi = "AAAAZd9i9bo:APA91bHSK_jwRbOx14HXyq9I6AClCjxzntRQ9G3xO"
-			+ "XP12gyB7uKifSAJIRIScZ8Y_2fBY_udl38cv7BYUt006CluHt6kVPv8iovdhuH20tMuC0QeuHxMy"
-			+ "5iYv36eV7nYj2214_CE9H8d";
-	@SuppressWarnings("ucd")
 	final static int iOsPushLimitationSeconds = 481;
 	final static int generalPushNotificationLimits = 20;
 	final static int loudPushNotificationLimits = 60;

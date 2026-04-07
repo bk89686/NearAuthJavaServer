@@ -269,7 +269,7 @@ public class JsonUtilities {
 		JSONObject jsonApnsConfig = new JSONObject();
 		jsonApnsConfig.put("aps", jsonApns);
 		jsonMessage.put("apnsConfig", jsonApnsConfig);
-		new DataAccess().addLog(jsonMessage.toString(4), LogConstants.TRACE);
+		new DataAccess().addLog(jsonMessage.toString(4), LogConstants.TEMPORARILY_IMPORTANT);
 	}
 
 	private String timestampToPushString(Timestamp timestamp) {

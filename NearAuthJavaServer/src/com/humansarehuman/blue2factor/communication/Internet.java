@@ -146,7 +146,7 @@ public class Internet {
 
 //	private static final String MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 //	private static final String[] SCOPES = { MESSAGING_SCOPE };
-	private static final String FB_JSON_PATH = "/etc/blue2factor-backend/blue2factor-firebase-adminsdk-mvf5g-79cb3dde89.json";
+	private static final String FB_JSON_PATH = "/etc/blue2factor-backend/nearauth-ai-firebase-adminsdk-fbsvc-d4c7411b5e.json";
 //
 //	private static String getAccessToken() throws IOException {
 //		GoogleCredentials googleCredentials = GoogleCredentials.fromStream(new FileInputStream(FB_JSON_PATH))
@@ -190,7 +190,7 @@ public class Internet {
 			// TODO: change this back to async
 			messageId = FirebaseMessaging.getInstance().send(message);
 //			messageId = FirebaseMessaging.getInstance().sendAsync(message).get();
-			dataAccess.addLog("send firebase message response: " + messageId, LogConstants.TRACE);
+			dataAccess.addLog("send firebase message response: " + messageId, LogConstants.TEMPORARILY_IMPORTANT);
 		} catch (Exception e) {
 			dataAccess.addLog(e);
 		}

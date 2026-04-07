@@ -901,7 +901,6 @@ async function setPublicKeyInIdb(publicKey){
     var conn;
     try {
         conn = await openDb();
-        debugger;
         success = await setKeyInDb(conn, "serverKey", publicKey);
     } finally {
         if(conn) {
@@ -922,7 +921,6 @@ function setKeyInDb(conn, name, keyValue){
         };
         const request = objectStore.put(newKey);
         request.onsuccess = function(){
-			debugger;
             cLog("successfully put " + name + " in indexedDb");
             resolve(true);
         };

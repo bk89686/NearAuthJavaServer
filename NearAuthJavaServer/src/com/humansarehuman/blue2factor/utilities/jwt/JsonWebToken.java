@@ -241,7 +241,7 @@ public class JsonWebToken {
 
 	public boolean validateJwt(String jwsString, boolean ignoreExpiration) {
 		boolean validated = false;
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 
 		Claims claims = decryptJwt(jwsString, dataAccess);
@@ -268,8 +268,8 @@ public class JsonWebToken {
 									Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", company.getApiKey()))) {
 								dataAccess.addLog("issuer: " + issuer, logLevel);
 								for (String audienceMember : audience) {
-									dataAccess.addLog("audienceMember: " + audienceMember, logLevel);
-									if (audienceMember.equals(company.getCompanyBaseUrl())) {
+									dataAccess.addLog("audienceMember: " + audienceMember + " =? " + company.getCompanyBaseUrl(), logLevel);
+									if (dataAccess.urlMatchesCompany(company, audienceMember) || audienceMember.equals("secure.nearauth.ai")) {
 										validated = true;
 										dataAccess.addLog("all claims were validated", logLevel);
 									}

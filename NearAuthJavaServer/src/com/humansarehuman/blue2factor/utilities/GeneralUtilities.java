@@ -359,6 +359,9 @@ public class GeneralUtilities {
 	public static String getNakedDomain(String urlString) {
 		String nakedDomain = null;
 		try {
+			if (!urlString.startsWith("http")) {
+				urlString = "https://" + urlString;
+			}
 			URI uri = new URI(urlString);
 			URL url = uri.toURL();
 			String host = url.getHost();

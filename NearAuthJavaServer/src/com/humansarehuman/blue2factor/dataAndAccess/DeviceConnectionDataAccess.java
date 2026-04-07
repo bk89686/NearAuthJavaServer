@@ -94,11 +94,11 @@ public class DeviceConnectionDataAccess extends DataAccess {
 				"peripheralIsAwake");
 		if (peripheral != null) {
 			if (peripheral.isActive() && !peripheral.isScreensaverOn()) {
-				dataAccess.addLog("peripheral is awake", LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog("peripheral is awake", LogConstants.TRACE);
 				awake = true;
 			}
 		} else {
-			dataAccess.addLog("peripheral is sleeping", LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("peripheral is sleeping", LogConstants.TRACE);
 			dataAccess.addLog("peripheral is null for conId: " + connection.getConnectionId());
 		}
 		return awake;
@@ -147,6 +147,7 @@ public class DeviceConnectionDataAccess extends DataAccess {
 		hm.put("CENTRAL_DEVICE_ID", centralDeviceId);
 		hm.put("GROUP_ID", groupId);
 		hm.put("ACTIVE", true);
+		hm.put("INSTALL_COMPLETE", true);
 		return updateConnectionMap(connection, hm, "setCentralIdGroupIdAndActive");
 	}
 
@@ -2153,7 +2154,7 @@ public class DeviceConnectionDataAccess extends DataAccess {
 				j++;
 			}
 			prepStmt.setString(j, connection.getConnectionId());
-			logQueryImportant("updateConnectionMap", prepStmt);
+			logQuery("updateConnectionMap", prepStmt);
 			prepStmt.executeUpdate();
 			success = true;
 		} catch (SQLException e) {

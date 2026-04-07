@@ -186,6 +186,19 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		}
 		return startAndEndEvents;
 	}
+	
+	public DeviceDbObj getFirstPeripheralForGroup(GroupDbObj group) {
+		DeviceDbObj firstPerf = null;
+		ArrayList<DeviceDbObj> devices = this.getDevicesByGroupId(group.getGroupId(), true);
+		for (DeviceDbObj device : devices) {
+			if (!device.isCentral()) {
+				firstPerf = device;
+				break;
+			}
+		}
+		
+		return firstPerf;
+	}
 
 	public RssiAndTime getRssiForPeripheral(DeviceDbObj device, DeviceConnectionDbObj conn) {
 		Integer rssi = 0;
@@ -1276,7 +1289,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		if (activeOnly) {
 			query += "AND ACTIVE = ? ";
 		}
-		query += "ORDER BY CENTRAL";
+		query += "ORDER BY CENTRAL, CREATE_DATE";
 		Connection conn = null;
 		PreparedStatement prepStmt = null;
 		ResultSet rs = null;
@@ -2242,7 +2255,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 				j++;
 			}
 			prepStmt.setString(j, device.getDeviceId());
-			this.logQueryImportant("updateDeviceMap", prepStmt);
+			this.logQuery("updateDeviceMap", prepStmt);
 			prepStmt.executeUpdate();
 			success = true;
 		} catch (SQLException e) {

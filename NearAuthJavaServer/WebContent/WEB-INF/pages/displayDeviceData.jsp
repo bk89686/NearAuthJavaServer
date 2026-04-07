@@ -48,6 +48,14 @@
         	font-weight: bold;
         }
         
+        .whiteLink {
+			color: white;
+		}
+		
+		.blackLink {
+			color: black;
+		}
+        
         .logoImage {
         	height:116px;
         }
@@ -120,6 +128,16 @@
 	    	.hideMobile {
 	    		display: none;
 	    	}
+	    	
+	    	#timelineBody {
+	    		padding-top: 20px;
+			    padding-left: 20px;
+			    padding-right: 20px;
+	    	}
+	    	
+	    	#pageTime {
+			    text-align: left;
+			}
     	}
     	@media screen and (max-width: 480px) {
     		body {
@@ -128,28 +146,41 @@
 	    	}
 	    	#searchTime {
 			    width: 82%;
-			    margin: 60px 4% 0px 4%;
     		}
+    		
+    		#devTitle {
+	  			width: 95%;
+	  		}
+	    	
+	    	table {
+	    		width: 95%;
+	    	}
     		
     		#submitTime {
 			    left: 50%;
 			    margin-top: 20px;
 			}
+			
+			#branding_row {
+				padding-top: 50px;
+			}
+			
+			
     	}
     </style>
     <!--<link rel="stylesheet" href="/css/deviceData_1.0.0.1.css">-->
 </head>
 <body>
     <div id='branding_row'>
-		<div class='branding_image'><img src='/imgFiles/NearAuthLogoSquircle3d.svg' class='logoImage'></div>
-		<div class='branding_text'>NearAuth.ai</div>
+		<div class='branding_image'><a href='https://www.nearauth.ai'><img src='/imgFiles/NearAuthLogoSquircle3d.svg' class='logoImage'></a></div>
+		<div class='branding_text'><a href='https://www.nearauth.ai' class='blackLink'>NearAuth.ai</a></div>
 	</div>
     <c:if test="${deviceData.outcome == 1}">
     	<h2>Something went awry</h2>
     	<p>${deviceData.reason}</p>
     </c:if>
     <c:if test="${deviceData.outcome == 0}"> 
-	    <h2>Device Information for ${username}</h2>
+	    <h2 id='devTitle'>Device Information for ${username}</h2>
 	    <c:set var="coName" value="${deviceData.companyName}"/>
 	    <c:set var="b2f" value="B2X" />
 	    <c:if test="${deviceData.outcome == 0}">
@@ -250,8 +281,8 @@
 				    		<input type='time' id="startTime" name="startTime">
 				    		<label for="startSeconds" id='startSecondsLabel' class='timeSecondsLabel'>Seconds:</label>
 				    		<input id="startSeconds" name="startSeconds" value="00" class='timeSeconds'>
-				    		<label for="startMillis" id='startMillisLabel' class='timeMillisLabel'>Millis:</label>
-				    		<input id="startMillis" name="startMillis" value="000" class='timeMillis'>
+				    		<!--  <label for="startMillis" id='startMillisLabel' class='timeMillisLabel'>Millis:</label>
+				    		<input id="startMillis" name="startMillis" value="000" class='timeMillis'>-->
 				    	</div>
 				    	<div id='startDateDiv'>
 				    		<label for='startDate' id='startDateLabel'>Date:</label>
@@ -262,8 +293,8 @@
 				    		<input type='time' id="endTime" name="endTime">
 				    		<label for="endSeconds" id='endSecondsLabel' class='timeSecondsLabel'>Seconds:</label>
 				    		<input type="number" id="endSeconds" name="endSeconds" value="00" class='timeSeconds'>
-				    		<label for="endMillis" id='endMillisLabel' class='timeMillisLabel'>Millis:</label>
-				    		<input id="endMillis" name="endMillis" value="000" class='timeMillis'>
+				    		<!--  <label for="endMillis" id='endMillisLabel' class='timeMillisLabel'>Millis:</label>
+				    		<input id="endMillis" name="endMillis" value="000" class='timeMillis'>-->
 				    	</div>
 				    	<div id='endDateDiv'>
 				    		<label for='endTime' id='endDateLabel'>End date:</label>

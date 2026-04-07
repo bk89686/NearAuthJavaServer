@@ -77,7 +77,7 @@ public class FirstFactorSetup extends B2fApi {
 			}
 		}
 		if (!redirected && redirectView == null) {
-			redirectView = new RedirectView("/genericFailure?src=" + sender);
+			redirectView = new RedirectView("/setupFailure?src=" + sender);
 		}
 		return redirectView;
 	}

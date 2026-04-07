@@ -56,13 +56,16 @@ public class BluetoothConnected extends BaseController {
 				src = "an unknown source";
 			}
 			if (!TextUtils.isBlank(serviceUuid)) {
+				DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId);
 				DeviceConnectionDbObj connection = dataAccess.getConnectionByServiceUuid(serviceUuid);
 				if (TextUtils.isBlank(peripheralReference) && connection == null) {
+					handleConnectionUpdate(request, key, iv, dataAccess, connection, device,
+							peripheralReference, connected, src);
+					outcome = Outcomes.SUCCESS;
 					reason = "peripheralReference was blank";
 				} else {
 					if (connection != null) {
-						DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId);
-						if (TextUtils.isBlank(peripheralReference) || !peripheralReference.equals(connection.getPeripheralIdentifier())) {
+						if (!peripheralReference.equals(connection.getPeripheralIdentifier())) {
 							if (TextUtils.isBlank(connection.getPeripheralIdentifier())) {
 								dataAccess.addLog(
 										"the peripheral_id was blank in the connection table. We are going to update it, "
@@ -73,15 +76,18 @@ public class BluetoothConnected extends BaseController {
 										peripheralReference, connected, src);
 								outcome = Outcomes.SUCCESS;
 							} else {
-								reason = "serviceUUID: " + serviceUuid + " and peripheral reference: "
-										+ peripheralReference + " do not match. It should have been "
-										+ connection.getPeripheralIdentifier() + " This sucks -- from " + src;
-								dataAccess.addLog(deviceId, "bluetoothConnectedPost", reason, LogConstants.ERROR);
-								HashMap<String, Object> hm = new HashMap<String, Object>();
-								if (peripheralReference != null && !peripheralReference.equals("null")) {								hm.put("PERIPHERAL_IDENTIFIER", "");
-									dataAccess.updateConnectionMap(connection, hm, "bluetoothConnectedPost");
-								}
+								if (peripheralReference != "null") {
+									reason = "serviceUUID: " + serviceUuid + " and peripheral reference: "
+											+ peripheralReference + " do not match. It should have been "
+											+ connection.getPeripheralIdentifier() + " This sucks -- from " + src;
+									dataAccess.addLog(deviceId, "bluetoothConnectedPost", reason, LogConstants.ERROR);
+									HashMap<String, Object> hm = new HashMap<String, Object>();
+									if (peripheralReference != null && !peripheralReference.equals("null")) {								hm.put("PERIPHERAL_IDENTIFIER", "");
+										dataAccess.updateConnectionMap(connection, hm, "bluetoothConnectedPost");
+									}
+								} else {
 								reason = Constants.NEEDS_RESCAN;
+								}
 							}
 						} else {
 

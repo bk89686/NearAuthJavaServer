@@ -87,7 +87,7 @@ public class QandD extends B2fApi {
 //			dataAccess.updateCompany(company);
 //			i++;
 //		}
-		BasicResponse br = testEncryption();
+		BasicResponse br = testSilentPush2();
 		model = this.addBasicResponse(model, br);
 		return "result";
 	}
@@ -141,7 +141,7 @@ public class QandD extends B2fApi {
 
 	String central = "XE7Bb0fZTLbf2Twq04mjlHea21whwdH10T4WELlZ";
 	String perf = "kr7vHDbHJ9bqCLmLJBw38jTj745o2HuK03bK7kf4";
-	String otherCentral = "b4hmdY2eAHlKN8LdQaTC2a56ifvKah8oIIoKEyc9";
+	String otherCentral = "UxH9iYf6Yubs6vGDeW6ty0H8xiuHMhUEIDYf7b9s";
 	String fcmToken = "eV07iX5nME2Jq3qbYG1Alf:APA91bHAepJsS4o57ooz0tkvLmVT6XfCCHqcWcvhgNeX8QStk_xmJ-dGPqb486GUdRCw8qJKz1kP_ygEExhn2sdB1zxn_WdzcGqyH-9Ldkd9IeAZTt7rUvk";
 
 	public BasicResponse testSilentPush2() {

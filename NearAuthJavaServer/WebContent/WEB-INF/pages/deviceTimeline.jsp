@@ -13,11 +13,12 @@
 			font-style: normal;
 			src: url(/fonts/DidotTitle.otf);
 		}
-    	body {
+    	#timelineBody {
     		padding-top: 100px;
     		padding-left: 150px;
     		padding-right: 150px;
     		padding-bottom: 150px;
+    		background: rgb(42, 50, 58) !important;
     	}
     	
     	table {
@@ -34,6 +35,8 @@
         
         th {
             background-color: #8a8a8a;
+		    color: white;
+		    font-weight: bold;
         }
         
         .leadCol {
@@ -42,6 +45,10 @@
     	
     	.secondaryCol {
     		width: 23%;
+    	}
+    	
+    	.white {
+    		color: white;
     	}
         
         #timePresent tbody tr:nth-child(even) {
@@ -52,6 +59,15 @@
             background-color: #f9f9f9;
         }
         
+        #timePresent tbody tr:nth-child(odd) {
+            background-color: #efefef;
+        }
+        
+        
+        #weekData tbody tr:nth-child(odd) {
+    		background-color: #efefef;
+    	}
+    	
         .day-row {
             padding-bottom: 46px;
         }
@@ -67,9 +83,10 @@
             display: flex;
             width: 100%;
             height: 60px;
-            border: 1px solid #ccc;
+            border: 1px solid #f9f9f9;;
             border-radius: 6px;
             position: relative;
+            background: #efefef;
         }
         
         .overlay {
@@ -97,7 +114,7 @@
         
         .line{
         	height: 5px;
-        	border-left: 1px solid black;
+        	border-left: 1px solid #efefef;
         	top: 57px;
         	position: relative;
         }
@@ -114,7 +131,7 @@
         }
         
         .connected.proximity {
-            background-color: #defae1;
+            background-color: #bbffb3;
             transition: transform 0.3s ease-in-out;
             z-index: 1;
         }
@@ -211,8 +228,27 @@
         }
         
         #backLink {
-
+			color: white;
         }
+        
+        .crosshatch {
+		  background-color: #eee; /* Fallback color */
+		  background-image: repeating-linear-gradient(
+		      45deg,
+		      transparent,
+		      transparent 5px,
+		      #ccc 6px,
+		      #ccc 6px
+		    ),
+		    repeating-linear-gradient(
+		      135deg,
+		      transparent,
+		      transparent 5px,
+		      #ccc 6px,
+		      #ccc 6px
+		    );
+		  background-size: 18px 9px; /* Controls the density of the hatch */
+		}
         
         #branding_row {
         	text-align:center;
@@ -226,6 +262,7 @@
         	font-family: logoText;
         	font-size: 1.9em;
         	font-weight: bold;
+        	color: white;
         }
         
         .logoImage {
@@ -241,6 +278,10 @@
 		  position: relative;
 		  display: inline-block;
 		  cursor: pointer;
+		}
+		
+		.whiteLink {
+			color: white;
 		}
 		
 		
@@ -315,30 +356,36 @@
 	    	.dateString {
 	    		display: block;
 	    	}
+	    	
+	    	#timelineBody {
+	    		padding-top: 20px;
+			    padding-left: 20px;
+			    padding-right: 20px;
+	    	}
     	}
     </style>
     <%@ include file="header.jsp" %>
 </head>
-<body>
+<body id='timelineBody'>
 	<c:if test="${demo == false}">
 		<a id='backLink' href='/deviceData'>
 			&lt;- Back 
 		</a>
 	</c:if>
 	<div id='branding_row'>
-		<div class='branding_image'><img src='/imgFiles/NearAuthLogoSquircle3d.svg' class='logoImage'></div>
-		<div class='branding_text'>NearAuth.ai</div>
+		<div class='branding_image'><a href='https://www.nearauth.ai'><img src='/imgFiles/NearAuthLogoSquircle3d.svg' class='logoImage'></a></div>
+		<div class='branding_text'><a href='https://www.nearauth.ai' class='whiteLink'>NearAuth.ai</a></div>
 	</div>
-    <h2>Connection Information for ${username} on ${deviceData.deviceType}</h2>
+    <h2 class='white'>Connection Information for ${username} on ${deviceData.deviceType}</h2>
     <c:if test="${demo == false}">
     	<button id='renameButton' class='popupButton'>Rename device</button>
     </c:if>
-    <h5>Central type: ${deviceData.centralType}</h5>
+    <h5 class='white'>Central type: ${deviceData.centralType}</h5>
     <c:if test="${deviceData.outcome == 1}">
     	<p>${deviceData.reason}</p>
     </c:if>
     <c:if test="${deviceData.outcome == 0}">
-    	<h4 style='text-align:right; margin-top:-40px;'>${deviceData.currentTime}</h4>
+    	<h4 class='white' style='text-align:right; margin-top:-40px;'>${deviceData.currentTime}</h4>
     	<table id='weekData'>
 	    	<c:if test="${showWeeksTable}">
 		    	<tr>
@@ -390,7 +437,7 @@
 	    </table>
 	    <c:forEach var="dayEntry" items="${deviceDataOneDevicesGroupedByDate}" varStatus="loop1">
 	    	<c:if test="${!loop1.last}">
-		        <div class="day-row" id='dayRow${loop1.count}'>
+		        <div class="day-row white" id='dayRow${loop1.count}'>
 		            <div class="day-label" id='dayLabel${loop1.count}'>
 		            	<span class='dayString'>${dayEntry.value[0].sDay}</span>
 		            	<span class='dateString'>${dayEntry.value[0].sDate}</span>
@@ -424,7 +471,7 @@
 		            	<div class='line'><div class='hour odd'>11</div></div>
 		            </div>
 		            <!-- timeline row -->
-		            <div class="timeline">
+		            <div class="timeline crosshatch">
 		                <c:set var="offset" value="0" />
 		                <c:forEach var="device" items="${dayEntry.value}" varStatus="loop2">
 		                    <c:set var="widthPercent" value="${(device.secondsLong * 100) / totalTime}" />

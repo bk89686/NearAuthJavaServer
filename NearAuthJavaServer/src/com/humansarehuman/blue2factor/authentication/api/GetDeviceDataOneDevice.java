@@ -79,9 +79,16 @@ public class GetDeviceDataOneDevice extends B2fApi {
 		NearAuthAi nearAuth = new NearAuthAi();
 		String deviceId = this.getRequestValue(request, "did");
 		String newName = "";
-		DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId);
+		DeviceDbObj device;
+		boolean demo = false;
+		if (deviceId.equals("pzcSvxftLClu2oEBCqaFm7cRbF4GEjdHIQYVExru")) {
+			device = getTestDevice();
+			demo = true;
+		} else {
+			device = dataAccess.getDeviceByDeviceId(deviceId);
+		}
 		if (device != null) {
-			if (!device.getGroupId().equals(Constants.CHRIS_GROUP_ID)) {	
+			if (!demo) {	
 				if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
 		            return "couldNotConfirm";
 		        }
@@ -90,7 +97,7 @@ public class GetDeviceDataOneDevice extends B2fApi {
 		}
 		String reason = "";
 		if (device != null) {
-			if (!newName.equals("")) {
+			if (!newName.equals("") && !demo) {
 				device.setDeviceType(newName);
 				try {
 					if (!dataAccess.updateDevice(device, "postDeviceDataOneDevice")) {
@@ -125,18 +132,24 @@ public class GetDeviceDataOneDevice extends B2fApi {
 	public String getDeviceDataOneDevice(HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model) {
 		NearAuthAi nearAuth = new NearAuthAi();
 		String deviceId = this.getRequestValue(request, "did");
-		DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId);
-		TokenDbObj token = null;
+		DeviceDbObj device;
 		boolean demo = false;
+		if (deviceId.equals("pzcSvxftLClu2oEBCqaFm7cRbF4GEjdHIQYVExru")) {
+			device = getTestDevice();
+			demo = true;
+		} else {
+			device = dataAccess.getDeviceByDeviceId(deviceId);
+		}
+		TokenDbObj token = null;
+		
 		if (device != null) {
-			if (!device.getGroupId().equals(Constants.CHRIS_GROUP_ID)) {	
+			if (!demo) {	
 				if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
 					return nearAuth.redirectToFailure();
 				}
 				token = this.getPersistentTokenObj(request);
 			} else {
 				dataAccess.addLog("this is a demo", LogConstants.TEMPORARILY_IMPORTANT);
-				demo = true;
 				token = dataAccess.getDefaultBrowserTokenForChris();
 			}
 			if (token == null) {
@@ -153,6 +166,12 @@ public class GetDeviceDataOneDevice extends B2fApi {
 		model.addAttribute("fromPush", false);
 		model.addAttribute("demo", demo);
 		return "deviceTimeline";
+	}
+	
+	private DeviceDbObj getTestDevice() {
+		GroupDbObj group = dataAccess.getGroupByEmail("chris@blue2factor.com");
+		DeviceDbObj device = dataAccess.getFirstPeripheralForGroup(group);
+		return device;
 	}
 
 	private ModelMap showPage(HttpServletRequest request, ModelMap model, DeviceDbObj device, TokenDbObj token) {

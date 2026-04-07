@@ -111,7 +111,6 @@ async function checkForFingerprint(){
 
 document.addEventListener("DOMContentLoaded", function(){
     try{
-        //alert("pause");
         initialize();
     }catch (e){
         serverLog(e.message);

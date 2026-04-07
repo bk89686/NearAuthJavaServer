@@ -75,7 +75,7 @@ public class FingerprintRegistration extends B2fApi {
 			throws IOException {
 		boolean success = false;
 		String instanceId = frReq.getBrowserSession();
-		int logLevel = LogConstants.TRACE;
+		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		dataAccess.addLog("instanceId: " + instanceId, logLevel);
 		GeneralUtilities generalUtilities = new GeneralUtilities();
@@ -90,6 +90,7 @@ public class FingerprintRegistration extends B2fApi {
 			if (token != null) {
 				
 				String origin = GeneralUtilities.getUrlHost(frReq.getReqUrl());
+				dataAccess.addLog("origin: " + origin, logLevel);
 				dataAccess.removeOtherAuthenticator(token.getBrowserId(), origin);
 				DeviceDbObj device = dataAccess.getDeviceBySessionTokenIgnoringExpiration(instanceId);
 				if (device != null) {

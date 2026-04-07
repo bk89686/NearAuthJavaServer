@@ -44,13 +44,13 @@ public class SubmitKey extends BaseController {
 		boolean foreground = this.getRequestValueBoolean(request, "fg", false);
 		boolean sshKey = this.getRequestValueBoolean(request, "cli", false);
 		boolean resend = this.getRequestValueBoolean(request, "resend", false);
-		boolean postNearAuth = this.getRequestValueBoolean(request, "postNearAuth", false);
+//		boolean postNearAuth = this.getRequestValueBoolean(request, "postNearAuth", false);
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		dataAccess.addLog(devId, "deviceId: " + devId + ", foreground: " + foreground + ", sshKey: " + 
-				sshKey + ", postNearAuth: " +postNearAuth, LogConstants.IMPORTANT);
+				sshKey, LogConstants.IMPORTANT);
 		DeviceDbObj device = dataAccess.getDeviceByDeviceId(devId);
 		try {
-			if (device != null && postNearAuth) {
+			if (device != null) {
 				String publicKey = this.getRequestValue(request, "eausnht");
 				dataAccess.addLog(devId, "device found for updating key to: " + publicKey, LogConstants.TRACE);
 				if (!TextUtils.isBlank(publicKey)) {
@@ -84,11 +84,7 @@ public class SubmitKey extends BaseController {
 						outcome = Outcomes.SUCCESS;
 					}
 				} else {
-					if (!postNearAuth) {
-						reason = "public key was blank";
-					} else {
-						reason = Constants.DEV_NOT_FOUND;
-					}
+					reason = Constants.DEV_NOT_FOUND;
 				}
 			} else {
 				reason = "outdated version";
