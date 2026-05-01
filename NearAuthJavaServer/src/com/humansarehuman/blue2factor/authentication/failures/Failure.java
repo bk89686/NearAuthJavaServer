@@ -32,7 +32,7 @@ public class Failure extends B2fApi {
 			ModelMap model, IdentityObjectFromServer idObj, CompanyDataAccess dataAccess, String authToken)
 			throws IOException {
 		String nextPage = "needsResync";
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		if (idObj != null) {
 			DeviceDbObj device = idObj.getDevice();
 			if (device != null) {
@@ -106,7 +106,7 @@ public class Failure extends B2fApi {
 			ModelMap model, IdentityObjectFromServer idObj, CompanyDataAccess dataAccess, String authToken,
 			String session) {
 		String nextPage = "needsResync";
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		DeviceDbObj device = idObj.getDevice();
 		if (isTempBrowser(idObj.getBrowser())) {
 			dataAccess.addLog("authToken: " + authToken, logLevel);
@@ -159,7 +159,7 @@ public class Failure extends B2fApi {
 			CompanyDataAccess dataAccess) {
 		String audience = idObj.getCompany().getCompleteCompanyLoginUrl();
 //		String ourIssuerStr = Urls.SECURE_URL + Urls.SAML_ENTITY_ID.replace("{apiKey}", idObj.getCompany().getApiKey());
-		dataAccess.addLog("audience: " + audience, LogConstants.TEMPORARILY_IMPORTANT);
+		dataAccess.addLog("audience: " + audience, LogConstants.TRACE);
 		String jwt = new JsonWebToken().buildJwt(idObj, audience);
 		model.addAttribute("submitUrl", submitUrl);
 		model.addAttribute("jwt", jwt);

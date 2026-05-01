@@ -10,7 +10,8 @@ public class LogConstants {
 	public final static int ERROR = 4;
 	public final static int FATAL = 5;
 	public final static int IMPORTANT = 3;
-	public final static int TEMPORARILY_IMPORTANT = 4; // Do a global search and replace with TRACE after done
+	public final static int TEMP_IMPORTANT = 4; // Do a global search and replace with TRACE after done
+	public final static int TEMP = 1;
 	public final static int REALLY_IMPORTANT = 4;
 
 	public final static boolean LOG_QUERY = true;

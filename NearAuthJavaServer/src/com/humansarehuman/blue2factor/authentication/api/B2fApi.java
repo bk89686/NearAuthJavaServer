@@ -152,12 +152,12 @@ public class B2fApi extends BaseController {
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		String reason = "";
 		int outcome = Outcomes.FAILURE;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		TokenDbObj oldToken = null;
 		String token = "";
 		try {
 			if (!TextUtils.isBlank(session)) {
-				dataAccess.addLog("instanceId: " + session);
+				dataAccess.addLog("instanceId: " + session, logLevel);
 				DeviceDbObj device = null;
 				oldToken = dataAccess.getTokenByDescriptionAndTokenId(TokenDescription.BROWSER_SESSION, session);
 				device = dataAccess.getDeviceByDeviceId(oldToken.getDeviceId(), "validateAccess");

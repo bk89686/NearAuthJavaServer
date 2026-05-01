@@ -75,7 +75,7 @@ public class FingerprintRegistration extends B2fApi {
 			throws IOException {
 		boolean success = false;
 		String instanceId = frReq.getBrowserSession();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		dataAccess.addLog("instanceId: " + instanceId, logLevel);
 		GeneralUtilities generalUtilities = new GeneralUtilities();

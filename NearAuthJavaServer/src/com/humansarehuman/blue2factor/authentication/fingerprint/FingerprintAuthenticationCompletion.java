@@ -61,7 +61,7 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 			HttpServletResponse response) throws IOException {
 		ApiResponse apiResponse;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		try {
 			
 			dataAccess.addLog("auth: " + auth.toString(), logLevel);
@@ -93,7 +93,7 @@ public class FingerprintAuthenticationCompletion extends B2fApi {
 		DataAccess dataAccess = new DataAccess();
 		// Client properties
 		int outcome = Outcomes.FAILURE;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		String reason = "";
 		try {
 			AuthResponse authResp = auth.getResponse();

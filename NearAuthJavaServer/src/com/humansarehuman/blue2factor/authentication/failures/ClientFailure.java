@@ -32,7 +32,7 @@ public class ClientFailure extends Failure {
 	@RequestMapping(method = RequestMethod.GET)
 	public Object clientFailureProcessGet(HttpServletRequest request, HttpServletResponse httpResponse, ModelMap model,
 			@PathVariable("CompanyID") String apiKey) {
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		String nextPage = "needsResync";
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);

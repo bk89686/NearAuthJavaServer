@@ -1,4 +1,4 @@
-package com.humansarehuman.blue2factor.authentication.api;
+package com.humansarehuman.blue2factor.authentication.tracking;
 
 import java.sql.Timestamp;
 import java.time.DayOfWeek;
@@ -12,6 +12,7 @@ import java.time.temporal.IsoFields;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.threeten.bp.Year;
 
+import com.humansarehuman.blue2factor.authentication.api.B2fApi;
 import com.humansarehuman.blue2factor.constants.Constants;
 import com.humansarehuman.blue2factor.constants.LogConstants;
 import com.humansarehuman.blue2factor.constants.Outcomes;
@@ -76,6 +78,7 @@ public class GetDeviceDataOneDevice extends B2fApi {
 	public String postDeviceDataOneDevice(HttpServletRequest request, HttpServletResponse httpResponse,
 			ModelMap model) {
 		boolean success = false;
+		int logLevel = LogConstants.TRACE;
 		NearAuthAi nearAuth = new NearAuthAi();
 		String deviceId = this.getRequestValue(request, "did");
 		String newName = "";
@@ -88,6 +91,7 @@ public class GetDeviceDataOneDevice extends B2fApi {
 			device = dataAccess.getDeviceByDeviceId(deviceId);
 		}
 		if (device != null) {
+			dataAccess.addLog("device found", logLevel);
 			if (!demo) {	
 				if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
 		            return "couldNotConfirm";
@@ -98,25 +102,34 @@ public class GetDeviceDataOneDevice extends B2fApi {
 		String reason = "";
 		if (device != null) {
 			if (!newName.equals("") && !demo) {
+				dataAccess.addLog("not a demo and no new name", logLevel);
 				device.setDeviceType(newName);
 				try {
 					if (!dataAccess.updateDevice(device, "postDeviceDataOneDevice")) {
 						reason = "changing the device name to \"" + newName + "\" failed";
 					} else {
-						success = true;
+						if (dataAccess.isAccessAllowed(device)) {
+							success = true;
+						}
 					}
 				} catch (Exception e) {
 					dataAccess.addLog(e);
 					reason = e.getLocalizedMessage();
 				}
+			} else if (!demo) {
+				success = dataAccess.isAccessAllowed(device);
 			}
 		}
+		TokenDbObj token;
 		if (success) {
-			TokenDbObj token = this.getPersistentTokenObj(request);
+			token = this.getPersistentTokenObj(request);
 			if (token == null) {
 				String browserId = nearAuth.getBrowserId();
 				token = dataAccess.getActiveTokenByOrDescriptionAndTokenId(TokenDescription.BROWSER_TOKEN, browserId);
 			}
+			model = this.showPage(request, model, device, token);
+		} else if (demo) {
+			token = dataAccess.getDefaultBrowserTokenForChris();
 			model = this.showPage(request, model, device, token);
 		} else {
 			DeviceDataOneDeviceApiResponse deviceData = new DeviceDataOneDeviceApiResponse(deviceId);
@@ -144,12 +157,13 @@ public class GetDeviceDataOneDevice extends B2fApi {
 		
 		if (device != null) {
 			if (!demo) {	
+				dataAccess.addLog("not a demo", LogConstants.TRACE);
 				if (!nearAuth.authenticateAndSecure(request, httpResponse, myCompanyId, getClientPrivateKey())) {
 					return nearAuth.redirectToFailure();
 				}
 				token = this.getPersistentTokenObj(request);
 			} else {
-				dataAccess.addLog("this is a demo", LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog("this is a demo", LogConstants.TRACE);
 				token = dataAccess.getDefaultBrowserTokenForChris();
 			}
 			if (token == null) {
@@ -180,8 +194,10 @@ public class GetDeviceDataOneDevice extends B2fApi {
 		String reason = "";
 		try {
 			if (token != null) {
+				dataAccess.addLog("tokenFound", LogConstants.TRACE);
 				GroupDbObj group = dataAccess.getActiveGroupFromToken(token);
 				if (group != null && device != null) {
+					dataAccess.addLog("group and device Found", LogConstants.TRACE);
 					GroupDbObj deviceGroup = dataAccess.getGroupById(device.getGroupId());
 					CompanyDbObj company = dataAccess.getCompanyById(group.getCompanyId());
 					try {
@@ -192,9 +208,9 @@ public class GetDeviceDataOneDevice extends B2fApi {
 							iDays = Integer.parseInt(days);
 						}
 						boolean admin = dataAccess.userIsAdmin(group);
-						if (device != null && (admin || device.getGroupId().equals(group.getGroupId())
-								|| device.getGroupId().equals(group.getGroupId().substring(2)))) {
-
+						if (admin || device.getGroupId().equals(group.getGroupId())
+								|| device.getGroupId().equals(group.getGroupId().substring(2))) {
+							dataAccess.addLog("passed admin test", LogConstants.TRACE);
 							ArrayList<DeviceConnectionDbObj> conns = new ArrayList<>();
 							DeviceDbObj central;
 							boolean periodIncludesFirstLog;
@@ -203,13 +219,12 @@ public class GetDeviceDataOneDevice extends B2fApi {
 								deviceId = deviceId.substring(2);
 							}
 							if (!device.isCentral()) {
-
 								DeviceConnectionDbObj conn = dataAccess.getConnectionForPeripheral(deviceId, true);
 								periodIncludesFirstLog = periodIncludesFirstLog(conn, iDays);
 								central = dataAccess.getDeviceByDeviceId(conn.getCentralDeviceId());
 								conns.add(conn);
 							} else {
-								conns = dataAccess.getConnectionsForCentral(deviceId);
+								conns = dataAccess.getConnectionsForCentral(device);
 								periodIncludesFirstLog = periodIncludesFirstLog(conns, iDays);
 								central = device;
 							}
@@ -258,7 +273,7 @@ public class GetDeviceDataOneDevice extends B2fApi {
 
 	private ModelMap addTrackerToModel(ModelMap model, TimeTracker timeTracker) {
 		timeTracker = fillDayAndWeekMaps(timeTracker);
-//		timeTracker.printAll();
+		timeTracker.printAll();
 		Collections.sort(timeTracker.timePerWeek, Collections.reverseOrder());
 		Collections.sort(timeTracker.timePerDay, Collections.reverseOrder());
 		model.addAttribute("dayData", timeTracker.timePerDay);
@@ -272,27 +287,51 @@ public class GetDeviceDataOneDevice extends B2fApi {
 	private TimeTracker buildTimeTracker(TimeTracker timeTracker, CompanyDbObj company,
 			ArrayList<DeviceConnectionDbObj> conns, DeviceDbObj device, DeviceDbObj central, int iDays,
 			boolean periodIncludesFirstLog) {
-		if (conns.size() > 0) {
-			String connId = conns.get(0).getConnectionId();
-			deviceData = new DeviceDataOneDeviceApiResponse(device.getDeviceType(), central.getDeviceType(),
-					device.getDeviceId(), connId);
-			ArrayList<ConnectionLogDbObj> connLogs = dataAccess.getLastDaysConnectionLogs(conns, device, iDays);
-
-			if (periodIncludesFirstLog) {
-				connLogs = addTimeBeforeInstall(connLogs);
-			} else {
-				connLogs = addPreviousConnectionLog(connLogs);
-			}
-			ArrayList<ConnectionLogDbObj> neededLogs = this.removeUnneededLogs(company, connLogs,
-					periodIncludesFirstLog, device.isCentral());
-			if (neededLogs.size() > 0) {
-				for (int i = 1; i <= neededLogs.size(); i++) {
-					timeTracker = addToTimePerDayAndWeek(neededLogs, i, timeTracker);
+		ArrayList<ConnectionLogDbObj> connLogs = new ArrayList<>();
+		boolean firstRun = true;
+		deviceData = new DeviceDataOneDeviceApiResponse(device.getDeviceType(), central.getDeviceType(),
+				device.getDeviceId(), conns.get(0).getConnectionId(), device.isCentral());
+		for (DeviceConnectionDbObj conn : conns) {
+			if (device.isCentral()) {
+				//TODO: remove the for loop and do this all in one query
+				dataAccess.addLog("building time tracker for central", LogConstants.TRACE);
+				ArrayList<ConnectionLogDbObj> connLogsForConnection = new ArrayList<>();
+				DeviceDbObj perfDevice = dataAccess.getPeripheralDeviceByConnection(conn);
+				deviceData.addPeripheral(perfDevice.getDeviceType());
+				connLogsForConnection = dataAccess.getLastDaysConnectionLogs(conn, perfDevice, iDays, device.getDeviceId());
+				connLogs.addAll(connLogsForConnection);
+				if (!firstRun) {
+					connLogs.sort(Comparator.comparing(o -> o.getEventTimestamp()));
 				}
+				firstRun = false;
 			} else {
-				dataAccess.addLog("log length was 0", LogConstants.WARNING);
+				dataAccess.addLog("building time tracker for perf", LogConstants.TRACE);
+				connLogs = dataAccess.getLastDaysConnectionLogs(conn, device, iDays, device.getDeviceId());
 			}
 		}
+		if (periodIncludesFirstLog) {
+			connLogs = addTimeBeforeInstall(connLogs);
+		} else {
+			connLogs = addPreviousConnectionLog(connLogs);
+		}
+		ArrayList<ConnectionLogDbObj> neededLogs = this.removeUnneededLogs(company, connLogs,
+				periodIncludesFirstLog, device.isCentral());
+		
+		if (neededLogs.size() > 0) {
+			int i;
+			for (i = 1; i <= neededLogs.size(); i++) {
+				if (i == neededLogs.size()) {
+					dataAccess.addLog("last");
+				}
+				timeTracker = addToTimePerDayAndWeek(neededLogs, i, timeTracker);
+			}
+			if (i == 1) {
+				dataAccess.addLog("no needed logs", LogConstants.WARNING);
+			}
+		} else {
+			dataAccess.addLog("log length was 0", LogConstants.WARNING);
+		}
+		
 		return timeTracker;
 	}
 
@@ -432,10 +471,10 @@ public class GetDeviceDataOneDevice extends B2fApi {
 
 		Instant startInstant = startOfInterval.toInstant();
 		ZonedDateTime zonedStart = ZonedDateTime.ofInstant(startInstant, easternTime);
-		dataAccess.addLog("start: " + zonedStart.toString(), logLevel);
+//		dataAccess.addLog("start: " + zonedStart.toString(), logLevel);
 		Instant endInstant = endOfInterval.toInstant();
 		ZonedDateTime zonedEnd = ZonedDateTime.ofInstant(endInstant, easternTime);
-		dataAccess.addLog("end: " + zonedEnd.toString(), logLevel);
+//		dataAccess.addLog("end: " + zonedEnd.toString(), logLevel);
 		long intervalSeconds;
 		while (zonedEnd.isAfter(zonedStart)) {
 			if (zonedEnd.getDayOfYear() == zonedStart.getDayOfYear()) {
@@ -454,7 +493,7 @@ public class GetDeviceDataOneDevice extends B2fApi {
 					connTypeNonSpecific = OTHER;
 				}
 			}
-			dataAccess.addLog("adding event at " + startInstant + " lasting" + timespan, logLevel);
+			dataAccess.addLog("adding event at " + zonedStart + " lasting " + timespan, logLevel);
 			DeviceDataOneDevice oneDeviceEvent = new DeviceDataOneDevice(Timestamp.from(startInstant),
 					baseRecord.isConnected(), connType, timespan, intervalSeconds, baseRecord.getSrc(),
 					baseRecord.getDescription());
@@ -464,6 +503,8 @@ public class GetDeviceDataOneDevice extends B2fApi {
 			if (baseRecord.isConnected()) {
 				timeTracker = addToTimePerDay(timeTracker, lDate, intervalSeconds, connTypeNonSpecific);
 				timeTracker = addToTimePerWeek(timeTracker, zonedStart, intervalSeconds, connTypeNonSpecific);
+			} else {
+				dataAccess.addLog("wtf");
 			}
 			ArrayList<DeviceDataOneDevice> currEvents;
 			if (timeTracker.groupedByDate.containsKey(lDate)) {
@@ -551,17 +592,18 @@ public class GetDeviceDataOneDevice extends B2fApi {
 	}
 
 	private ArrayList<ConnectionLogDbObj> removeUnneededLogs(CompanyDbObj company,
-			ArrayList<ConnectionLogDbObj> connLogs, boolean periodIncludesFirstLog, boolean dontSetIgnore) {
+			ArrayList<ConnectionLogDbObj> connLogs, boolean periodIncludesFirstLog, 
+			boolean isCentral) {
 		ArrayList<ConnectionLogDbObj> neededLogs = new ArrayList<>();
 		ConnectionLogDbObj baseLog;
 		ConnectionLogDbObj currentLog;
 		ConnectionLogDbObj nextLog;
 		long seconds = -1;
 		int startIndex = getStartingTime(connLogs, periodIncludesFirstLog);
-		neededLogs.add(connLogs.get(startIndex));
 		boolean connectionChanged;
 		ConnectionLogDbObj finalConnLog = null;
 		if (startIndex != -1) {
+			neededLogs.add(connLogs.get(startIndex));
 			baseLog = connLogs.get(startIndex);
 			int i = startIndex;
 			dataAccess.addLog("starting at: " + i, logLevel);
@@ -600,7 +642,7 @@ public class GetDeviceDataOneDevice extends B2fApi {
 						if (currentLog.isConnected()) {
 							if (currentLog.getConnectionId() != null) {
 								DeviceConnectionDbObj lastConn = dataAccess
-										.getConnectionByConnectionId(currentLog.getConnectionId());
+											.getConnectionByConnectionId(currentLog.getConnectionId());
 								if (!dataAccess.isAccessAllowed(lastConn, false)) {
 									finalConnLog = dataAccess.getLastConnectionStatusFromLog(lastConn);
 								}
@@ -618,14 +660,14 @@ public class GetDeviceDataOneDevice extends B2fApi {
 						dataAccess.addLog("using connLog @ " + currentLog.getEventTimestamp() + ", connected: "
 								+ currentLog.isConnected(), logLevel);
 					} else {
-						if (!dontSetIgnore) {
+						if (!isCentral) {
 							dataAccess.updateIgnoreConnectionRecord(currentLog);
 							dataAccess.addLog("not using connLog @ " + currentLog.getEventTimestamp()
 									+ " because it is too short: " + seconds + " seconds.", logLevel);
 						}
 					}
 				} else {
-					if (!dontSetIgnore) {
+					if (!isCentral) {
 						dataAccess.updateIgnoreConnectionRecord(currentLog);
 						dataAccess.addLog("not using connLog @ " + currentLog.getEventTimestamp()
 								+ " because the connection status for both is " + currentLog.isConnected()
@@ -639,10 +681,11 @@ public class GetDeviceDataOneDevice extends B2fApi {
 			neededLogs.add(finalConnLog);
 		}
 		dataAccess.addLog("log # before removal: " + connLogs.size() + "; after: " + neededLogs.size(), logLevel);
-		printLogs("neededLogs", neededLogs);
+//		printLogs("neededLogs", neededLogs);
 		return neededLogs;
 	}
 
+	@SuppressWarnings("unused")
 	private void printLogs(String name, ArrayList<ConnectionLogDbObj> connLogs) {
 		for (ConnectionLogDbObj connLog : connLogs) {
 			dataAccess.addLog(name + ": " + connLog.toString(), logLevel);
@@ -721,16 +764,23 @@ public class GetDeviceDataOneDevice extends B2fApi {
 		int startIndex = -1;
 		ConnectionLogDbObj nextLog;
 		ConnectionLogDbObj currentLog;
+		dataAccess.addLog("startSize: " + connLogs.size(), LogConstants.TRACE);
 		for (int i = 0; i < connLogs.size(); i++) {
 			currentLog = connLogs.get(i);
-			nextLog = connLogs.get(i + 1);
-			if (currentLog.isConnected() != nextLog.isConnected() || periodIncludesFirstLog) {
-				if (DateTimeUtilities.absoluteTimestampDifferenceInSeconds(currentLog.getEventTimestamp(),
-						nextLog.getEventTimestamp()) > 30 || periodIncludesFirstLog) {
-					startIndex = i;
-					dataAccess.addLog("starting time: " + currentLog.getEventTimestamp() + " at index: " + i, logLevel);
-					break;
+			try {
+				nextLog = connLogs.get(i + 1);
+				if (currentLog != null && nextLog != null) {
+					if (currentLog.isConnected() != nextLog.isConnected() || periodIncludesFirstLog) {
+						if (DateTimeUtilities.absoluteTimestampDifferenceInSeconds(currentLog.getEventTimestamp(),
+								nextLog.getEventTimestamp()) > 30 || periodIncludesFirstLog) {
+							startIndex = i;
+							dataAccess.addLog("starting time: " + currentLog.getEventTimestamp() + " at index: " + i, logLevel);
+							break;
+						}
+					}
 				}
+			} catch (Exception e) {
+				
 			}
 		}
 		return startIndex;
@@ -1079,6 +1129,7 @@ public class GetDeviceDataOneDevice extends B2fApi {
 	}
 
 	TimeTracker addDayIfNeeded(TimeTracker timeTracker, long dayNumber) {
+		//add the day if it's not in the array
 		if (getTimeDayByDayNumber(timeTracker, dayNumber) == null) {
 			TimeDay timeDay = new TimeDay(dayNumber);
 			timeTracker.timePerDay.add(timeDay);

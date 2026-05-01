@@ -241,7 +241,7 @@ public class SamlDataAccess extends CompanyDataAccess {
 				prepStmt.setInt(17, authn.getOutcome());
 				prepStmt.setString(18, authn.getSender());
 				prepStmt.setString(19, authn.getOutgoingRelayState());
-				logQueryImportant(getMethodName(), prepStmt);
+				logQuery(getMethodName(), prepStmt);
 				prepStmt.executeUpdate();
 			} catch (SQLException e) {
 				addLog("updateSamlAuthRequestByRelayState", e);
@@ -603,7 +603,7 @@ public class SamlDataAccess extends CompanyDataAccess {
 			prepStmt.setString(1, relayState);
 			rs = executeQuery(prepStmt);
 			while (rs.next()) {
-				addLog("getAuthRequestByOutgoingRelayState", "record found", LogConstants.IMPORTANT);
+				addLog("getAuthRequestByOutgoingRelayState", "record found", LogConstants.INFO);
 				samlAuthReq = recordToSamlAuthRequest(rs);
 				break;
 			}
@@ -651,7 +651,7 @@ public class SamlDataAccess extends CompanyDataAccess {
 			prepStmt.setString(1, relayState);
 			rs = executeQuery(prepStmt);
 			while (rs.next()) {
-				addLog("getAuthRequestByIncomingRelayState", "record found", LogConstants.IMPORTANT);
+				addLog("getAuthRequestByIncomingRelayState", "record found", LogConstants.INFO);
 				samlAuthReq = recordToSamlAuthRequest(rs);
 				addLog("tableId: " + samlAuthReq.getTableId());
 				break;

@@ -41,7 +41,7 @@ public class ReportSleeping extends BaseController {
 					key, iv, false);
 
 			dataAccess.addLog(deviceId, "reporting computer awake status as: " + computerAwake,
-					LogConstants.TEMPORARILY_IMPORTANT);
+					LogConstants.TRACE);
 			DeviceDbObj device = dataAccess.getDeviceByDeviceId(deviceId);
 			if (device != null) {
 				if (dataAccess.updateDeviceAwake(device, computerAwake, false)) {

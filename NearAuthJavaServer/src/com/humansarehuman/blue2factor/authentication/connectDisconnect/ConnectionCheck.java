@@ -209,14 +209,17 @@ public class ConnectionCheck extends BaseController {
 						}
 					}
 				} else {
+					dataAccess.addLog(deviceId, "This device is NOT active", LogConstants.WARNING);
 					reason = Constants.RESET;
 				}
 				varJson.put("devices", devServices);
 			} else {
 				DeviceDbObj expiredDev = dataAccess.getExpiredDevice(deviceId);
 				if (expiredDev == null) {
+					dataAccess.addLog(deviceId, "This device is NOT found", LogConstants.WARNING);
 					reason = Constants.DEVICE_NOT_FOUND;
 				} else {
+					dataAccess.addLog(deviceId, "This device is expired", LogConstants.WARNING);
 					reason = Constants.RESET;
 				}
 			}

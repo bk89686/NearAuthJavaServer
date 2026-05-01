@@ -77,7 +77,7 @@ public class FingerprintAuthentication extends B2fApi {
 			HttpServletResponse response) throws IOException {
 		FingerprintAuthenticationResponse frResp = new FingerprintAuthenticationResponse("failed", 0, "", null, "");
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		try {
 			dataAccess.addLog("start", logLevel);
 			String browserToken = frReq.getBrowserToken();

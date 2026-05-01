@@ -1,4 +1,4 @@
-package com.humansarehuman.blue2factor.authentication.api;
+package com.humansarehuman.blue2factor.authentication.tracking;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import com.humansarehuman.blue2factor.authentication.api.B2fApi;
 import com.humansarehuman.blue2factor.constants.Constants;
 import com.humansarehuman.blue2factor.constants.LogConstants;
 import com.humansarehuman.blue2factor.constants.Outcomes;

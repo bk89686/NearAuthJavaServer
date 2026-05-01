@@ -27,7 +27,7 @@ public class GetClientAudience extends SamlAndLdapResponse {
 	public String getSamlAudience(HttpServletRequest request, HttpServletResponse httpResponse,
 			ModelMap model, @PathVariable("apiKey") String apiKey) {
 		int outcome = Outcomes.FAILURE;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		String audience = "";
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);

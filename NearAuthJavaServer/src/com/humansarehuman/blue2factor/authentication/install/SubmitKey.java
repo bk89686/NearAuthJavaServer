@@ -47,7 +47,7 @@ public class SubmitKey extends BaseController {
 //		boolean postNearAuth = this.getRequestValueBoolean(request, "postNearAuth", false);
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		dataAccess.addLog(devId, "deviceId: " + devId + ", foreground: " + foreground + ", sshKey: " + 
-				sshKey, LogConstants.IMPORTANT);
+				sshKey, LogConstants.INFO);
 		DeviceDbObj device = dataAccess.getDeviceByDeviceId(devId);
 		try {
 			if (device != null) {
@@ -84,17 +84,17 @@ public class SubmitKey extends BaseController {
 						outcome = Outcomes.SUCCESS;
 					}
 				} else {
-					reason = Constants.DEV_NOT_FOUND;
+					reason = Constants.KEY_NOT_FOUND;
 				}
 			} else {
-				reason = "outdated version";
+				reason = Constants.DEV_NOT_FOUND;
 			}
 		} catch (Exception e) {
 			reason = e.getLocalizedMessage();
 			dataAccess.addLog(e);
 		}
 		if (!TextUtils.isBlank(reason)) {
-			dataAccess.addLog("failed with reason: " + reason, LogConstants.WARNING);
+			dataAccess.addLog(devId, "failed with reason: " + reason, LogConstants.WARNING);
 		}
 		BasicResponse response = new BasicResponse(outcome, reason, token);
 		model = this.addBasicResponse(model, response);

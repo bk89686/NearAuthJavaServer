@@ -168,7 +168,6 @@
 			
     	}
     </style>
-    <!--<link rel="stylesheet" href="/css/deviceData_1.0.0.1.css">-->
 </head>
 <body>
     <div id='branding_row'>
@@ -213,14 +212,15 @@
 		        <c:forEach items="${deviceData.deviceData}" var="device">
 		            <tr>
 				        <td class='bold'>
-				            <c:choose>
+				        	<a href='/shaneshuenhthubisa?did=${device.fullDeviceId}'>${device.deviceType}</a>
+				            <!--<c:choose>
 		            			<c:when test="${device.central}">
 					            	${device.deviceType}
 				            	</c:when>
 				                <c:otherwise>
 				                	<a href='/shaneshuenhthubisa?did=${device.fullDeviceId}'>${device.deviceType}</a>
 				                </c:otherwise>
-				            </c:choose>
+				            </c:choose>-->
 				        </td>
 			                
 		                <c:choose>

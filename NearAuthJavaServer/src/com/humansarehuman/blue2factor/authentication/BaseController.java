@@ -1147,10 +1147,6 @@ public abstract class BaseController {
 			String firstLetter = GeneralUtilities.randomLetters(1);
 			String[] centralInstanceIdPair = new Encryption().createEncryptedInstanceId(centralDevice, firstLetter);
 			if (centralInstanceIdPair != null) {
-				dataAccess.addLog(peripheral.getDeviceId(), "new instance pair was created for our central",
-						LogConstants.IMPORTANT);
-				dataAccess.addLog(peripheral.getDeviceId(), "it is: " + centralInstanceIdPair[0] + " = " + centralInstanceIdPair[1],
-						LogConstants.IMPORTANT);
 				KeyDbObj key = Encryption.getDevicePublicKey(peripheral);
 				if (key != null) {
 					String[] peripheralInstanceIdPair = new Encryption().createEncryptedInstanceId(key, peripheral,

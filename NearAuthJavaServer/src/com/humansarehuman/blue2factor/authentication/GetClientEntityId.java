@@ -27,7 +27,7 @@ public class GetClientEntityId extends SamlAndLdapResponse {
 	public String getClientEntityId(HttpServletRequest request, HttpServletResponse httpResponse,
 			ModelMap model, @PathVariable("apiKey") String apiKey) {
 		int outcome = Outcomes.FAILURE;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		String entityId = "";
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);

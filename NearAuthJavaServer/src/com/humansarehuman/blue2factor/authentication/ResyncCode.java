@@ -3,6 +3,8 @@ package com.humansarehuman.blue2factor.authentication;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.sql.Timestamp;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +17,7 @@ import com.humansarehuman.blue2factor.entities.BasicResponse;
 import com.humansarehuman.blue2factor.entities.enums.TokenDescription;
 import com.humansarehuman.blue2factor.entities.tables.CompanyDbObj;
 import com.humansarehuman.blue2factor.entities.tables.DeviceDbObj;
+import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
 import com.humansarehuman.blue2factor.utilities.Encryption;
 import com.humansarehuman.blue2factor.utilities.GeneralUtilities;
 
@@ -47,7 +50,8 @@ public class ResyncCode extends BaseController {
 					CompanyDbObj company = dataAccess.getCompanyByDevId(central.getDeviceId());
 					if (company != null && company.isActive()) {
 						tokenId = GeneralUtilities.randomString();
-						dataAccess.addTokenWithId(device, "", tokenId, TokenDescription.RESYNC, 0, "");
+						Timestamp expire = DateTimeUtilities.getCurrentTimestampMinusMinutes(5);
+						dataAccess.addTokenWithId(device, "", tokenId, TokenDescription.RESYNC, 0, "", expire);
 						Encryption encryption = new Encryption();
 						tokenId = encryption.encryptStringWithPublicKey(central, tokenId);
 						outcome = Outcomes.SUCCESS;

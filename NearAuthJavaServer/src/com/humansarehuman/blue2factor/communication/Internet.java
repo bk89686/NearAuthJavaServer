@@ -190,7 +190,7 @@ public class Internet {
 			// TODO: change this back to async
 			messageId = FirebaseMessaging.getInstance().send(message);
 //			messageId = FirebaseMessaging.getInstance().sendAsync(message).get();
-			dataAccess.addLog("send firebase message response: " + messageId, LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("send firebase message response: " + messageId, LogConstants.TRACE);
 		} catch (Exception e) {
 			dataAccess.addLog(e);
 		}

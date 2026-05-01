@@ -430,6 +430,7 @@ public class DeviceConnectionDataAccess extends DataAccess {
 			conn = MySqlConn.getConnection();
 			prepStmt = conn.prepareStatement(query);
 			prepStmt.setString(1, connectionId);
+			this.logQuery("getConnectionByConnectionId", prepStmt);
 			rs = executeQuery(prepStmt);
 			while (rs.next()) {
 				connection = recordToConnection(rs);
@@ -789,7 +790,7 @@ public class DeviceConnectionDataAccess extends DataAccess {
 			}
 		} else {
 			addLog(connection.getPeripheralDeviceId(), "one of the devices is turned off or asleep",
-					LogConstants.WARNING);
+					LogConstants.INFO);
 		}
 		return connected;
 	}
@@ -812,7 +813,7 @@ public class DeviceConnectionDataAccess extends DataAccess {
 		}
 		if (turnedOffOrAsleep) {
 			this.addLog(connection.getPeripheralDeviceId(), "turnedOffOrAsleep: " + turnedOffOrAsleep,
-					LogConstants.WARNING);
+					LogConstants.INFO);
 		}
 		return turnedOffOrAsleep;
 	}
@@ -1756,7 +1757,7 @@ public class DeviceConnectionDataAccess extends DataAccess {
 				prepStmt.setString(j, connections.get(j - 1).getConnectionId());
 			}
 			prepStmt.setInt(j++, 1);
-			logQueryImportant(getMethodName(), prepStmt);
+			logQuery(getMethodName(), prepStmt);
 			rs = executeQuery(prepStmt);
 			if (rs.next()) {
 				currConn = this.rsToConnectionLog(rs);
@@ -1772,59 +1773,15 @@ public class DeviceConnectionDataAccess extends DataAccess {
 
 	/*
 	 */
-	public ArrayList<ConnectionLogDbObj> getLastDaysConnectionLogs(ArrayList<DeviceConnectionDbObj> connections,
-			DeviceDbObj device, int days) {
-		ArrayList<ConnectionLogDbObj> connLogs = new ArrayList<>();
-		if (connections.size() == 1) {
-			connLogs = getLastDaysConnectionLogs(connections.get(0), device, days);
-		} else {
-			if (device != null) {
-				String deviceId = device.getDeviceId();
-				if (deviceId.startsWith("X-")) {
-					deviceId = deviceId.substring(2);
-				}
-				ConnectionLogDbObj currConn = null;
-				String qMarks = "";
-				for (int i = 0; i < connections.size(); i++) {
-					qMarks += ("?");
-					if (i < connections.size() - 1) {
-						qMarks += (", ");
-					}
-				}
-				String query = "SELECT * FROM B2F_CONNECTION_LOG WHERE ((CONNECTION_ID IN (" + qMarks
-						+ ") AND (CONNECTION_TYPE = ? OR CONNECTION_TYPE IS NULL)) OR DEVICE_ID = ?) AND "
-						+ " IGNORE_EVENT = ? AND EVENT_TIMESTAMP > NOW() - INTERVAL ? DAY ORDER BY EVENT_TIMESTAMP";
-				Connection conn = null;
-				PreparedStatement prepStmt = null;
-				ResultSet rs = null;
-				try {
-					conn = MySqlConn.getConnection();
-					prepStmt = conn.prepareStatement(query);
-					int j;
-					for (j = 1; j <= connections.size(); j++) {
-						prepStmt.setString(j, connections.get(j - 1).getConnectionId());
-					}
-					prepStmt.setString(j++, "prox");
-					prepStmt.setString(j++, deviceId);
-					prepStmt.setBoolean(j++, false);
-					prepStmt.setInt(j++, days);
-					logQueryImportant(getMethodName(), prepStmt);
-					rs = executeQuery(prepStmt);
-					while (rs.next()) {
-						currConn = this.rsToConnectionLog(rs);
-						connLogs.add(currConn);
-					}
-				} catch (SQLException e) {
-					addLog(e);
-				} finally {
-					MySqlConn.close(rs, prepStmt, conn);
-				}
-			} else {
-				this.addLog("device or connection was null", LogConstants.ERROR);
-			}
-		}
-		return connLogs;
-	}
+//	public ArrayList<ConnectionLogDbObj> getLastDaysConnectionLogs(DeviceConnectionDbObj connection,
+//			DeviceDbObj device, int days) {
+//		ArrayList<ConnectionLogDbObj> connLogs = new ArrayList<>();
+//		ArrayList<ConnectionLogDbObj> newConnLogs;
+//		if (connection != null) {
+//			connLogs = getLastDaysConnectionLogs(connection, device, days);
+//		}
+//		return connLogs;
+//	}
 
 	/**
 	 * This is faster than using the query with CONNECTION_ID IN (...
@@ -1835,12 +1792,13 @@ public class DeviceConnectionDataAccess extends DataAccess {
 	 * @return
 	 */
 	public ArrayList<ConnectionLogDbObj> getLastDaysConnectionLogs(DeviceConnectionDbObj connection, DeviceDbObj device,
-			int days) {
+			int days, String centralId) {
 		ArrayList<ConnectionLogDbObj> connLogs = new ArrayList<>();
 		if (device != null) {
 			ConnectionLogDbObj currConn = null;
-			String query = "SELECT * FROM B2F_CONNECTION_LOG WHERE ((CONNECTION_ID = ? AND (CONNECTION_TYPE = ? OR CONNECTION_TYPE IS NULL)) OR DEVICE_ID = ?) AND "
-					+ " IGNORE_EVENT = ? AND EVENT_TIMESTAMP > NOW() - INTERVAL ? DAY ORDER BY EVENT_TIMESTAMP";
+			String query = "SELECT * FROM B2F_CONNECTION_LOG WHERE (CONNECTION_ID = ? OR DEVICE_ID = ? ";
+			query += ") AND IGNORE_EVENT = ? AND "
+					+ "EVENT_TIMESTAMP > NOW() - INTERVAL ? DAY ORDER BY EVENT_TIMESTAMP";
 			Connection conn = null;
 			PreparedStatement prepStmt = null;
 			ResultSet rs = null;
@@ -1848,11 +1806,14 @@ public class DeviceConnectionDataAccess extends DataAccess {
 				conn = MySqlConn.getConnection();
 				prepStmt = conn.prepareStatement(query);
 				prepStmt.setString(1, connection.getConnectionId());
-				prepStmt.setString(2, "prox");
-				prepStmt.setString(3, device.getDeviceId());
-				prepStmt.setBoolean(4, false);
-				prepStmt.setInt(5, days);
-				logQueryImportant(getMethodName(), prepStmt);
+				if (centralId == null) {
+					prepStmt.setString(2, device.getDeviceId());
+				} else {
+					prepStmt.setString(2, centralId);
+				}
+				prepStmt.setBoolean(3, false);
+				prepStmt.setInt(4, days);
+				logQuery(getMethodName(), prepStmt);
 				rs = executeQuery(prepStmt);
 				while (rs.next()) {
 					currConn = this.rsToConnectionLog(rs);
@@ -1866,7 +1827,6 @@ public class DeviceConnectionDataAccess extends DataAccess {
 		} else {
 			this.addLog("device or connection was null", LogConstants.ERROR);
 		}
-
 		return connLogs;
 	}
 
@@ -1915,7 +1875,7 @@ public class DeviceConnectionDataAccess extends DataAccess {
 			} else {
 				prepStmt.setString(8, null);
 			}
-			this.logQueryImportant("addConnectionLog", prepStmt);
+			this.logQuery("addConnectionLog", prepStmt);
 			prepStmt.executeUpdate();
 		} catch (SQLException e) {
 			addLog(connectionLog.getSrc(), e);

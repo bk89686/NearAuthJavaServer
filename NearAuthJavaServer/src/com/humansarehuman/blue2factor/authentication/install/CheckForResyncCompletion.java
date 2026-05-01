@@ -45,7 +45,7 @@ public class CheckForResyncCompletion extends BaseController {
             if (device != null) {
                 TokenDbObj token = dataAccess.getTokenByDeviceAndDescription(deviceId,
                         TokenDescription.RESYNC);
-                if (token == null) {
+                if (token != null) {
                     outcome = Outcomes.SUCCESS;
                 } else {
                     reason = Constants.PROCESSING;

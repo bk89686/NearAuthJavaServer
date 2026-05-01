@@ -464,7 +464,7 @@ public class PushNotifications {
 		if (lastPushSecondsAgo > Constants.SECONDS_TO_NOT_PUSH) {
 			if (loud || !device.isPushFailure() || lastPushSecondsAgo > Constants.SECONDS_TO_NOT_PUSH_IF_UNRESPONSIVE) {
 				new DataAccess().addLog("pushing, last one was " + lastPushSecondsAgo + " seconds ago",
-						LogConstants.IMPORTANT);
+						LogConstants.INFO);
 				shouldPush = true;
 			} else {
 				if (!loud) {

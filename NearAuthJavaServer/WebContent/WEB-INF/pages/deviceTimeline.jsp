@@ -380,7 +380,12 @@
     <c:if test="${demo == false}">
     	<button id='renameButton' class='popupButton'>Rename device</button>
     </c:if>
-    <h5 class='white'>Central type: ${deviceData.centralType}</h5>
+    <c:if test="${deviceData.central == false}">
+    	<h5 class='white'>Central: ${deviceData.centralType}</h5>
+    </c:if>
+    <c:if test="${deviceData.central == true}">
+    	<h5 class='white'>Peripheral(s): ${deviceData.peripherals}</h5>
+    </c:if>
     <c:if test="${deviceData.outcome == 1}">
     	<p>${deviceData.reason}</p>
     </c:if>

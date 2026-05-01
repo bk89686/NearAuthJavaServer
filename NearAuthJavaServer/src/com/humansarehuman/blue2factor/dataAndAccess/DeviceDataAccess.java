@@ -1115,7 +1115,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 				conn = MySqlConn.getConnection();
 				prepStmt = conn.prepareStatement(query);
 				prepStmt.setString(1, browserToken);
-				logQueryImportant(getMethodName(), prepStmt);
+				logQuery(getMethodName(), prepStmt);
 				rs = executeQuery(prepStmt);
 				if (rs.next()) {
 					device = recordToDevice(rs);
@@ -1300,7 +1300,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			if (activeOnly) {
 				prepStmt.setBoolean(2, true);
 			}
-			logQueryImportant(getMethodName(), prepStmt);
+			logQuery(getMethodName(), prepStmt);
 			rs = executeQuery(prepStmt);
 			int i = 0;
 			while (rs.next()) {
@@ -1334,7 +1334,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			if (activeOnly) {
 				prepStmt.setBoolean(3, true);
 			}
-			logQueryImportant(getMethodName(), prepStmt);
+			logQuery(getMethodName(), prepStmt);
 			rs = executeQuery(prepStmt);
 			int i = 0;
 			while (rs.next()) {
@@ -1508,7 +1508,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			prepStmt = conn.prepareStatement(sql);
 			prepStmt.setBoolean(1, true);
 			prepStmt.setString(2, device.getDeviceId());
-			this.logQueryImportant("expireChecksForDevice", prepStmt);
+			this.logQuery("expireChecksForDevice", prepStmt);
 			prepStmt.executeUpdate();
 			success = true;
 		} catch (Exception e) {
@@ -1629,7 +1629,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			prepStmt.setBoolean(3, false);
 			prepStmt.setString(4, centralDevice.getUserId());
 			prepStmt.setTimestamp(5, authTimeLimit);
-			logQueryImportant(getMethodName(), prepStmt);
+			logQuery(getMethodName(), prepStmt);
 			rs = executeQuery(prepStmt);
 			if (rs.next()) {
 				authed = true;
@@ -1729,7 +1729,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			prepStmt.setString(3, peripheralDevice.getUserId());
 
 			prepStmt.setTimestamp(4, authTimeLimit);
-			logQueryImportant(getMethodName(), prepStmt);
+			logQuery(getMethodName(), prepStmt);
 			rs = executeQuery(prepStmt);
 			if (rs.next()) {
 				authed = true;
@@ -1952,7 +1952,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			prepStmt.setTimestamp(3, now);
 			prepStmt.setBoolean(4, false);
 			prepStmt.setString(5, deviceId);
-			this.logQueryImportant("expireChecksForCentral", prepStmt);
+			this.logQuery("expireChecksForCentral", prepStmt);
 			prepStmt.executeUpdate();
 			success = true;
 			this.addLog(deviceId, "success");
@@ -2132,7 +2132,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 				prepStmt.setString(3, device.getDeviceId());
 				logQuery(getMethodName(), prepStmt);
 				prepStmt.executeUpdate();
-				this.addLog(device.getDeviceId(), "set screensaver on to " + !computerAwake, LogConstants.IMPORTANT);
+				this.addLog(device.getDeviceId(), "set screensaver on to " + !computerAwake, LogConstants.INFO);
 				if (!ignoreAccess) {
 					device.setScreensaverOn(!computerAwake);
 					if (computerAwake) {
@@ -2205,7 +2205,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 
 			prepStmt.setString(31, device.getDeviceId());
 
-			logQueryImportant(getMethodName(), prepStmt);
+			logQuery(getMethodName(), prepStmt);
 			prepStmt.executeUpdate();
 			this.addLog(device.getDeviceId(), device.getDeviceType() + " called from " + src);
 			success = true;
@@ -2612,19 +2612,20 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		boolean success = false;
 		CompanyDataAccess dataAccess = new CompanyDataAccess();
 		ConnectionType connType = null;
+		int logLevel = LogConstants.TRACE;
 		if (device != null) {
 			if (!device.isScreensaverOn()) {
 				if (isProximate(device, false)) {
-					addLog(device.getDeviceId(), "prox", LogConstants.TRACE);
+					addLog(device.getDeviceId(), "prox", logLevel);
 					connType = ConnectionType.PROX;
 					success = true;
 				} else {
-					addLog(device.getDeviceId(), "not prox", LogConstants.TRACE);
+					addLog(device.getDeviceId(), "not prox", logLevel);
 					ConnectedAndConnectionType cct = didGiveAccess(device, deactivateFingerprint);
 					success = cct.isConnected();
 					connType = cct.getConnectionType();
 					if (!success) {
-						addLog(device.getDeviceId(), "did not give access", LogConstants.TRACE);
+						addLog(device.getDeviceId(), "did not give access", logLevel);
 						success = isBtConnectedWithRecentTransfer(device);
 						if (success) {
 							connType = ConnectionType.PROX;
@@ -2642,7 +2643,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 					}
 				} else {
 					if (!device.isCentral()) {
-						addLog(device.getDeviceId(), "checking for communication", LogConstants.TRACE);
+						addLog(device.getDeviceId(), "checking for communication", logLevel);
 						success = hasPeripheralHadCommunication(device);
 					}
 				}
@@ -2833,10 +2834,10 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			}
 			addLog(connection.getPeripheralDeviceId(),
 					"connected: " + success + ", connType: " + connType + " (without device)", LogConstants.DEBUG);
+			validateWithConnectionLog(connection, success, connType);
 		} else {
 			addLog("withConnection: connection was null", LogConstants.ERROR);
 		}
-		validateWithConnectionLog(connection, success, connType);
 
 		return success;
 	}
@@ -3431,7 +3432,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 		} else {
 			accessAllowedWithAccessType.setReason(Constants.DEVICE_ASLEEP);
 			addLog(connection.getPeripheralDeviceId(), "one of the devices is turned off or asleep",
-					LogConstants.WARNING);
+					LogConstants.INFO);
 		}
 		return accessAllowedWithAccessType;
 	}
@@ -3468,7 +3469,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 				prepStmt.setString(4, CheckType.CONNECTION_FROM_PERIPHERAL.checkTypeName().toLowerCase());
 				prepStmt.setInt(5, Outcomes.SUCCESS);
 				prepStmt.setBoolean(6, false);
-				logQueryImportant(getMethodName(), prepStmt);
+				logQuery(getMethodName(), prepStmt);
 				rs = executeQuery(prepStmt);
 				if (rs.next()) {
 					CheckDbObj check = this.recordToCheck(rs);
@@ -3772,7 +3773,7 @@ public class DeviceDataAccess extends DeviceConnectionDataAccess {
 			Timestamp lastSubscribed = connection.getLastSubscribed();
 			long secondsAgo = DateTimeUtilities.timestampSecondAgo(lastSubscribed);
 			this.addLog(connection.getPeripheralDeviceId(), "lastConnection was " + secondsAgo + " seconds ago.",
-					LogConstants.IMPORTANT);
+					LogConstants.INFO);
 			Timestamp timePeriod = DateTimeUtilities
 					.getCurrentTimestampMinusSeconds(Constants.BLUETOOTH_CONNECTION_TIME_PERIOD);
 			this.addLog("is " + lastSubscribed + " after " + timePeriod);

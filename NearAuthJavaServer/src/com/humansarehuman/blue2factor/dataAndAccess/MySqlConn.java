@@ -18,6 +18,10 @@ class MySqlConn {
 
 	static {
 		// Configure HikariCP
+		setupDataSource();
+	}
+	
+	private static void setupDataSource() {
 		HikariConfig config = new HikariConfig();
 		try {
 			InputStream propFile = new MySqlConn().getClass().getResourceAsStream("/application.properties");
@@ -46,6 +50,9 @@ class MySqlConn {
 	}
 
 	public static Connection getConnection() throws SQLException {
+		if (dataSource == null) {
+			setupDataSource();
+		}
 		return dataSource.getConnection();
 	}
 

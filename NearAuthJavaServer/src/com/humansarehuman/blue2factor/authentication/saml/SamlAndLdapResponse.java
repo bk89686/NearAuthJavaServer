@@ -337,7 +337,7 @@ public class SamlAndLdapResponse extends B2fApi {
 	public UrlModelAndHttpResponse evaluateResponse(HttpServletRequest request, HttpServletResponse httpResponse,
 			ModelMap model, String samlResponse, String relayState, String apiKey) {
 		SamlDataAccess dataAccess = new SamlDataAccess();
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		dataAccess.addLog("post or get received, " + samlResponse);
 		UrlModelAndHttpResponse fnResponse = new UrlModelAndHttpResponse(null, model, httpResponse, Outcomes.FAILURE);
 		SamlAuthnRequestDbObj samlAuthRequest = null;

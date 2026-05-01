@@ -96,7 +96,7 @@ public class GroupDataAccess extends DeviceDataAccess {
 			prepStmt.setString(1, Constants.CHRIS_GROUP_ID);
 			prepStmt.setString(2, TokenDescription.BROWSER_TOKEN.toString());
 			prepStmt.setTimestamp(3, DateTimeUtilities.getCurrentTimestamp());
-			this.logQueryImportant(query, prepStmt);
+			this.logQuery(query, prepStmt);
 			rs = executeQuery(prepStmt);
 			
 			if (rs.next()) {

@@ -52,13 +52,17 @@ public class ValidateUser extends B2fApi {
 			getVersion(request);
 			String key = getKey(request);
 			String iv = getInitVector(request);
-			String username = this.getEncryptedRequestValue(request, "ljao98sajnmf", key, iv).toLowerCase();
+			String username = this.getEncryptedRequestValue(request, "ljao98sajnmf", key, iv);
+			String usernameLower = "";
+			if (username != null) {
+				usernameLower = username.toLowerCase();
+			}
 			String deviceId = this.getEncryptedRequestValue(request, "hcsaebstj", key, iv);
 			String loginToken = this.getEncryptedRequestValue(request, "tnahuckxhbuc", key, iv);
 			Boolean hasBle = this.getEncryptedRequestBoolean(request, "nthnsss", key, iv, true);
 			String tempId = this.getEncryptedRequestValue(request, "solcqn", key, iv);
-			dataAccess.addLog("username: '" + username + "'", LogConstants.DEBUG);
-			response = validateUser(username, deviceId, loginToken, hasBle, tempId);
+			dataAccess.addLog("username: '" + usernameLower + "'", LogConstants.WARNING);
+			response = validateUser(usernameLower, deviceId, loginToken, hasBle, tempId);
 		} catch (Exception e) {
 			dataAccess.addLog(e);
 			response.setReason(e.getLocalizedMessage());

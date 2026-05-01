@@ -48,7 +48,7 @@ public class ValidateToken extends B2fApi {
 			HttpServletResponse httpResponse, ModelMap model, @PathVariable("apiKey") String apiKey,
 			@RequestHeader(name = "Authorization") String authHeader) {
 		AccessAllowedWithAccessType response;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		SamlDataAccess dataAccess = new SamlDataAccess();
 		CompanyDbObj company = dataAccess.getCompanyByApiKey(apiKey);
 		if (company != null) {
@@ -158,7 +158,7 @@ public class ValidateToken extends B2fApi {
 	private AccessAllowedWithAccessType validateWithJwt(HttpServletRequest request, HttpServletResponse httpResponse,
 			String authToken, CompanyDbObj company, SamlDataAccess dataAccess) {
 		String jwtToken = null;
-		int logLevel = LogConstants.TEMPORARILY_IMPORTANT;
+		int logLevel = LogConstants.TRACE;
 		AccessAllowedWithAccessType apiResponse = new AccessAllowedWithAccessType(false, 
 				ConnectionType.NONE, DateTimeUtilities.getCurrentTimestamp(), "", "");
 		try {

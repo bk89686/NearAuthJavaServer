@@ -1656,10 +1656,10 @@ public class DataAccess extends DeviceFields {
 					if (check.isCompleted()) {
 						dataAccess.addLog(peripheralDevice.getDeviceId(),
 								"most recent check was completed at " + check.getCompletionDate(),
-								LogConstants.IMPORTANT);
+								LogConstants.INFO);
 					} else {
 						dataAccess.addLog(peripheralDevice.getDeviceId(), "most recent check was expired",
-								LogConstants.IMPORTANT);
+								LogConstants.INFO);
 					}
 				}
 			} else {
@@ -3374,7 +3374,7 @@ public class DataAccess extends DeviceFields {
 				prepStmt.setBoolean(14, check.isVerfiedReceipt());
 				prepStmt.setString(15, check.getCheckId());
 				deactivateFingerprints(check.getCentralDeviceId(), check.getPeripheralDeviceId());
-				this.logQueryImportant("updateCheck", prepStmt);
+				this.logQuery("updateCheck", prepStmt);
 				prepStmt.executeUpdate();
 				this.addLog(check.getCentralDeviceId(), "Check row updated for checkId " + check.getCheckId(),
 						LogConstants.TRACE);
@@ -3702,6 +3702,16 @@ public class DataAccess extends DeviceFields {
 		
 		TokenDbObj newToken = this.addTokenWithId(device.getGroupId(), device.getDeviceId(), browserId, tokenId, description,
 				permission, url);
+		if (newToken != null) {
+			this.expireTokensExcept(browserId, tokenId, "addTokenWithId", url);
+		}
+		return newToken;
+	}
+	
+	public TokenDbObj addTokenWithId(DeviceDbObj device, String browserId, String tokenId, TokenDescription description,
+			int permission, String url, Timestamp expire) {
+		TokenDbObj newToken = this.addTokenWithId(device.getGroupId(), device.getDeviceId(), browserId, tokenId, description,
+				permission, url, expire);
 		if (newToken != null) {
 			this.expireTokensExcept(browserId, tokenId, "addTokenWithId", url);
 		}
@@ -4381,7 +4391,7 @@ public class DataAccess extends DeviceFields {
 
 	public boolean addCompletedCheckForFingerprint(String instanceId, Timestamp expiration) {
 		DeviceDataAccess dataAccess = new DeviceDataAccess();
-		addLog("adding record", LogConstants.TEMPORARILY_IMPORTANT);
+		addLog("adding record", LogConstants.TRACE);
 		DeviceDbObj device = dataAccess.getDeviceByTokenIgnoreExpiration(instanceId, "addCompletedCheckForFingerprint");
 		return addCompletedCheckForFingerprint(device, instanceId, expiration, dataAccess);
 	}
@@ -4389,7 +4399,7 @@ public class DataAccess extends DeviceFields {
 	public boolean addCompletedCheckForFingerprint(IdentityObjectFromServer idObj, Timestamp expiration) {
 		boolean success = false;
 		DeviceDataAccess dataAccess = new DeviceDataAccess();
-		addLog("adding record", LogConstants.TEMPORARILY_IMPORTANT);
+		addLog("adding record", LogConstants.TRACE);
 
 		DeviceDbObj device = idObj.getDevice();
 		if (device != null) {
@@ -4403,11 +4413,11 @@ public class DataAccess extends DeviceFields {
 	public boolean addCompletedCheckForFingerprint(DeviceDbObj device, String instanceId, Timestamp expiration,
 			DeviceDataAccess dataAccess) {
 		boolean success = false;
-		dataAccess.addLog("adding record", LogConstants.TEMPORARILY_IMPORTANT);
+		dataAccess.addLog("adding record", LogConstants.TRACE);
 		String checkId = GeneralUtilities.randomString();
 		Timestamp now = DateTimeUtilities.getCurrentTimestamp();
 		if (device != null) {
-			dataAccess.addLog("device found", LogConstants.TEMPORARILY_IMPORTANT);
+			dataAccess.addLog("device found", LogConstants.TRACE);
 			try {
 				String centralId = null;
 				String perfId = null;
@@ -4424,7 +4434,7 @@ public class DataAccess extends DeviceFields {
 						device.getDeviceId(), "addCompletedCheckForFingerprint", ConnectionType.PASSKEY);
 				dataAccess.addConnectionLog(connLog);
 				success = true;
-				dataAccess.addLog(device.getDeviceId(), "adding record complete", LogConstants.TEMPORARILY_IMPORTANT);
+				dataAccess.addLog(device.getDeviceId(), "adding record complete", LogConstants.TRACE);
 			} catch (Exception e) {
 				dataAccess.addLog(e);
 			}
@@ -4642,7 +4652,7 @@ public class DataAccess extends DeviceFields {
 			prepStmt = conn.prepareStatement(query);
 			prepStmt.setString(1, tokenId);
 			rs = executeQuery(prepStmt);
-			logQueryImportant("getToken", prepStmt);
+			logQuery("getToken", prepStmt);
 			if (rs.next()) {
 				token = this.recordToToken(rs);
 			}
@@ -4851,6 +4861,7 @@ public class DataAccess extends DeviceFields {
 			prepStmt.setString(1, deviceId);
 			prepStmt.setString(2, desc.toString());
 			prepStmt.setTimestamp(3, now);
+//			this.logQueryImportant("getTokenByDeviceAndDescription", prepStmt);
 			rs = executeQuery(prepStmt);
 			if (rs.next()) {
 				token = this.recordToToken(rs);
@@ -5273,7 +5284,7 @@ public class DataAccess extends DeviceFields {
 				prepStmt.setString(18, check.getCentralInstanceId());
 				prepStmt.setString(19, check.getPeripheralInstanceId());
 				prepStmt.setTimestamp(20, check.getExpirationDate());
-				logQueryImportant("addCheck", prepStmt);
+				logQuery("addCheck", prepStmt);
 
 				prepStmt.executeUpdate();
 			} catch (SQLException e) {

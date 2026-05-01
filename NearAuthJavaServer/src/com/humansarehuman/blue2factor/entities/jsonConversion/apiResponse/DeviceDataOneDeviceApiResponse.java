@@ -2,6 +2,10 @@ package com.humansarehuman.blue2factor.entities.jsonConversion.apiResponse;
 
 import java.util.ArrayList;
 
+import org.apache.http.util.TextUtils;
+
+import com.humansarehuman.blue2factor.constants.LogConstants;
+import com.humansarehuman.blue2factor.dataAndAccess.DataAccess;
 import com.humansarehuman.blue2factor.utilities.DateTimeUtilities;
 
 public class DeviceDataOneDeviceApiResponse extends ApiResponse {
@@ -12,6 +16,8 @@ public class DeviceDataOneDeviceApiResponse extends ApiResponse {
 	String connectionId;
 	String currentTime;
 	String centralType;
+	String peripherals;
+	boolean central = false;
 
 	public DeviceDataOneDeviceApiResponse(String deviceId) {
 		super();
@@ -20,15 +26,21 @@ public class DeviceDataOneDeviceApiResponse extends ApiResponse {
 		this.connectionId = "";
 		this.deviceType = "";
 		this.centralType = "";
+		this.peripherals = "";
+		this.central = false;
+		
 	}
 
-	public DeviceDataOneDeviceApiResponse(String deviceType, String centralType, String deviceId, String connectionId) {
+	public DeviceDataOneDeviceApiResponse(String deviceType, String centralType, String deviceId, 
+			String connectionId, boolean central) {
 		super();
 		this.currentTime = DateTimeUtilities.currentTimestampToReadableAltWithNyTimezone();
 		this.deviceType = deviceType;
 		this.deviceId = deviceId;
 		this.connectionId = connectionId;
 		this.centralType = centralType;
+		this.peripherals = "";
+		this.central = central;
 	}
 
 	public DeviceDataOneDeviceApiResponse(ArrayList<DeviceDataOneDevice> deviceDataOneDevices) {
@@ -100,4 +112,23 @@ public class DeviceDataOneDeviceApiResponse extends ApiResponse {
 		this.centralType = centralType;
 	}
 
+	public String getPeripherals() {
+		return peripherals;
+	}
+
+	public void addPeripheral(String peripheral) {
+		if (!TextUtils.isEmpty(peripherals)) {
+			peripherals += ", " + peripheral;
+		} else {
+			peripherals = peripheral;
+		}
+	}
+
+	public boolean isCentral() {
+		return central;
+	}
+
+	public void setCentral(boolean central) {
+		this.central = central;
+	}
 }

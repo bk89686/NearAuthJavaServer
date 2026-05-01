@@ -722,7 +722,7 @@ public class CompanyDataAccess extends GroupDataAccess {
 				if (matches) {
 					break;
 				} else {
-					this.addLog("the string: " + referrer.toLowerCase() + "does not match the regex " + url.getUrlRegex(), LogConstants.IMPORTANT);
+					this.addLog("the string: " + referrer.toLowerCase() + "does not match the regex " + url.getUrlRegex(), LogConstants.INFO);
 				}
 			}
 		}
